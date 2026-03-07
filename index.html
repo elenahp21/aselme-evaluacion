@@ -1,0 +1,2663 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASELME - Sistema de Evaluación Científica</title>
+    <style>
+        :root {
+            --primary: #0284c7;
+            --primary-dark: #0369a1;
+            --secondary: #64748b;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #0f172a;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            text-align: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-in-progress {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-finalist {
+            background: #fce7f3;
+            color: #9f1239;
+        }
+
+        .badge-not-eligible {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-number {
+            width: 100px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .radio-label:has(input:checked) {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+
+        .radio-label input[type="radio"] {
+            width: 20px;
+            height: 20px;
+        }
+
+        .criterion-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .criterion-label {
+            font-weight: 500;
+        }
+
+        .criterion-max {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .score-display {
+            background: var(--primary);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 1rem 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th {
+            background: var(--bg);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text);
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-bar select {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .work-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .work-detail {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .work-detail:last-child {
+            border-bottom: none;
+        }
+
+        .work-detail-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .work-detail-value {
+            color: var(--text);
+        }
+
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 1rem;
+            }
+
+            .user-info {
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 0.5rem;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .criterion-row {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-bar {
+                flex-direction: column;
+            }
+
+            .filter-bar select {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app"></div>
+
+    <script>
+        console.log('ASELME script start');
+        // ============================================
+        // BASE DE DATOS PERSISTENTE + AUTENTICACIÓN
+        // ============================================
+        const STORAGE_KEY = 'aselme_db_v2';
+
+        // Revive fechas al parsear JSON
+        function reviver(key, value) {
+            if (typeof value === 'string') {
+                const iso = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+                if (iso.test(value)) return new Date(value);
+            }
+            return value;
+        }
+
+        // Hash SHA‑256 en el navegador
+        async function hashPassword(pwd) {
+            const enc = new TextEncoder();
+            const data = enc.encode(pwd);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        let DB = null; // se cargará en la inicialización
+
+        async function loadDB() {
+            const json = localStorage.getItem(STORAGE_KEY);
+            if (json) {
+                try {
+                    const parsed = JSON.parse(json, reviver);
+
+                        // migration: if any user has legacy `password` field, hash it and remove.
+                    let upgraded = false;
+                    for (const u of parsed.users || []) {
+                        if (u.password && !u.passwordHash) {
+                            u.passwordHash = await hashPassword(u.password);
+                            delete u.password;
+                            u.forcePasswordChange = true; // force change after migration
+                            upgraded = true;
+                        }
+                    }
+                    // ensure login tracking arrays exist
+                    if (!parsed.loginAttempts) {
+                        parsed.loginAttempts = [];
+                        upgraded = true;
+                    }
+                    // Ensure at least one active admin exists
+                    const hasActiveAdmin = (parsed.users || []).some(u => u.role === 'admin' && u.active);
+                    if (!hasActiveAdmin) {
+                        // try reactivate any admin or create default
+                        let admin = (parsed.users || []).find(u => u.role === 'admin');
+                        if (admin) {
+                            admin.active = true;
+                            console.warn('Reactivating existing admin account');
+                        } else {
+                            const adminHash = await hashPassword('admin123');
+                            parsed.users = parsed.users || [];
+                            parsed.users.push({ id: 'admin-1', username: 'admin', passwordHash: adminHash,
+                                                  fullName: 'Administrador ASELME', role: 'admin', active: true, forcePasswordChange: true });
+                            console.warn('No admin found in DB; default admin created');
+                        }
+                        upgraded = true;
+                    }
+                    if (upgraded) {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+                    }
+                    return parsed;
+                } catch (e) {
+                    console.error('Error leyendo base de datos, reinstalando vacía:', e);
+                    // if parsing fails, clear the broken entry and fall through to default
+                    localStorage.removeItem(STORAGE_KEY);
+                }
+            }
+
+            // Si no existe nada, generamos un dataset por defecto con admin
+            const adminHash = await hashPassword('admin123');
+
+            return {
+                users: [
+                    { id: 'admin-1', username: 'admin', passwordHash: adminHash,
+                      fullName: 'Administrador ASELME', role: 'admin', active: true, forcePasswordChange: true }
+                ],
+                works: [],
+                assignments: [],
+                phase1Reviews: [],
+                phase2Reviews: [],
+                phase3Reviews: [],
+                settings: {
+                    phase1Open: true,
+                    phase2Open: true,
+                    phase3Open: true
+                },
+                loginAttempts: []
+            };
+        }
+
+        function saveDB() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
+        }
+
+        // ============================================
+        // ESTADO DE LA APLICACIÓN
+        // ============================================
+        const State = {
+            currentUser: null,
+            currentView: 'login',
+            selectedWork: null,
+            filters: {
+                modality: 'all',
+                presentationType: 'all',
+                status: 'all'
+            },
+            editPhase2: false,
+            editPhase3: false,
+            activeAdminTab: 'estadisticas' // persist selected tab
+        };
+        // ID del usuario en edición (administración)
+        let editingUserId = null;
+
+        // ============================================
+        // FUNCIONES AUXILIARES
+        // ============================================
+        function calculatePhase2Score(review) {
+            const c3Subtotal = review.modality === 'investigacion'
+                ? (review.c3Design || 0) + (review.c3Sample || 0) + (review.c3Measurement || 0) + (review.c3Analysis || 0)
+                : (review.c3Description || 0) + (review.c3Selection || 0) + (review.c3Intervention || 0) + (review.c3Indicators || 0);
+
+            const total = (review.c1Innovation || 0) + (review.c2Objectives || 0) + c3Subtotal + 
+                         (review.c4Results || 0) + (review.c5Utility || 0);
+
+            const threshold = review.modality === 'investigacion' ? 20 : 17;
+            const eligible = c3Subtotal >= threshold;
+
+            return { c3Subtotal, total, eligible };
+        }
+
+        function calculatePhase3Score(review) {
+            return (review.c1Clarity || 0) + (review.c2Mastery || 0) + 
+                   (review.c3TimeManagement || 0) + (review.c4VisualQuality || 0);
+        }
+
+        function getWorkAssignedEvaluators(workId) {
+            return DB.assignments
+                .filter(a => a.workId === workId)
+                .map(a => DB.users.find(u => u.id === a.evaluatorId));
+        }
+
+        function getEvaluatorWorks(evaluatorId) {
+            const assignedWorkIds = DB.assignments
+                .filter(a => a.evaluatorId === evaluatorId)
+                .map(a => a.workId);
+            return DB.works.filter(w => assignedWorkIds.includes(w.id));
+        }
+
+        function getWorkPhase1Review(workId, evaluatorId) {
+            return DB.phase1Reviews.find(r => r.workId === workId && r.evaluatorId === evaluatorId);
+        }
+
+        function getWorkPhase2Review(workId, evaluatorId) {
+            return DB.phase2Reviews.find(r => r.workId === workId && r.evaluatorId === evaluatorId);
+        }
+
+        function getWorkPhase3Review(workId, evaluatorId) {
+            return DB.phase3Reviews.find(r => r.workId === workId && r.evaluatorId === evaluatorId);
+        }
+
+        function getWorkFinalScores(workId) {
+            const phase2Reviews = DB.phase2Reviews.filter(r => r.workId === workId && !r.isDraft);
+            const phase3Reviews = DB.phase3Reviews.filter(r => r.workId === workId && !r.isDraft);
+
+            if (phase2Reviews.length === 0) return null;
+
+            const avgPhase2 = phase2Reviews.reduce((sum, r) => {
+                const { total } = calculatePhase2Score(r);
+                return sum + total;
+            }, 0) / phase2Reviews.length;
+
+            const avgPhase3 = phase3Reviews.length > 0
+                ? phase3Reviews.reduce((sum, r) => sum + calculatePhase3Score(r), 0) / phase3Reviews.length
+                : 0;
+
+            const allEligible = phase2Reviews.every(r => {
+                const { eligible } = calculatePhase2Score(r);
+                return eligible;
+            });
+
+            return {
+                numEvaluations: phase2Reviews.length,
+                avgPhase2: avgPhase2.toFixed(2),
+                avgPhase3: avgPhase3.toFixed(2),
+                finalScore: (avgPhase2 + avgPhase3).toFixed(2),
+                eligibleForAward: allEligible
+            };
+        }
+
+        function formatDate(date) {
+            return new Date(date).toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        function getStatusBadge(status) {
+            const statusMap = {
+                pendiente: { class: 'badge-pending', text: 'Pendiente' },
+                en_evaluacion: { class: 'badge-in-progress', text: 'En evaluación' },
+                evaluado: { class: 'badge-completed', text: 'Evaluado' },
+                finalista: { class: 'badge-finalist', text: 'Finalista' },
+                no_elegible: { class: 'badge-not-eligible', text: 'No elegible' }
+            };
+            const badge = statusMap[status] || statusMap.pendiente;
+            return `<span class="badge ${badge.class}">${badge.text}</span>`;
+        }
+
+        function getModalityText(modality) {
+            return modality === 'investigacion' ? 'Investigación/Revisión' : 'Caso Clínico/Experiencia';
+        }
+
+        function renderLoginAttempts() {
+            if (!DB.loginAttempts || DB.loginAttempts.length === 0) {
+                return '<p>No hay registros de acceso.</p>';
+            }
+            const slice = DB.loginAttempts.slice(-20).reverse();
+            return `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>Hora</th><th>Usuario</th><th>Éxito</th></tr>
+                        </thead>
+                        <tbody>
+                            ${slice.map(a => `
+                                <tr>
+                                    <td>${formatDate(a.timestamp)} ${new Date(a.timestamp).toLocaleTimeString()}</td>
+                                    <td>${a.username}</td>
+                                    <td>${a.success ? '✅' : '❌'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function getPresentationTypeText(type) {
+            return type === 'oral' ? 'Comunicación Oral' : 'Póster';
+        }
+
+        // ============================================
+        // RENDERIZADO DE VISTAS
+        // ============================================
+        function render() {
+            const app = document.getElementById('app');
+
+            if (State.currentView === 'login') {
+                app.innerHTML = renderLogin();
+            } else if (State.currentUser && State.currentUser.forcePasswordChange) {
+                app.innerHTML = renderChangePassword();
+            } else if (State.currentUser && State.currentUser.role === 'admin') {
+                app.innerHTML = renderAdminDashboard();
+            } else {
+                app.innerHTML = renderEvaluatorDashboard();
+            }
+
+            // append footer note
+            const footer = document.createElement('div');
+            footer.style.marginTop = '2rem';
+            footer.style.fontSize = '0.75rem';
+            footer.style.textAlign = 'center';
+            footer.style.color = 'var(--text-secondary)';
+            footer.textContent = 'Copyright © Elena Hernández 2026 - Todos los derechos reservados';
+            app.appendChild(footer);
+
+            try {
+                attachEventListeners();
+            } catch (e) {
+                console.error('Error in attachEventListeners:', e);
+            }
+        }
+
+        function renderLogin() {
+            const userCount = DB && DB.users ? DB.users.length : 0;
+            return `
+                <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+                    <div class="card" style="max-width: 400px; width: 100%;">
+                        <div style="text-align: center; margin-bottom: 2rem;">
+                            <h1 style="color: var(--primary); margin-bottom: 0.5rem;">ASELME</h1>
+                            <p style="color: var(--text-secondary);">Sistema de Evaluación Científica</p>
+                        </div>
+
+                        <form id="loginForm" onsubmit="handleLogin(event)">
+                            <div class="form-group">
+                                <label class="form-label">Usuario</label>
+                                <input type="text" id="loginUsername" class="form-input" required placeholder="nombre_usuario" autocomplete="username">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Contraseña</label>
+                                <input type="password" id="loginPassword" class="form-input" required placeholder="••••••••" autocomplete="current-password">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">Iniciar sesión</button>
+                        </form>
+
+                        <div style="text-align:center; margin-top:1rem; font-size:0.85rem; color:var(--text-secondary);">
+                            Usuarios en la base: ${userCount}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderChangePassword() {
+            return `
+                <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+                    <div class="card" style="max-width: 400px; width: 100%;">
+                        <h2 style="text-align:center; color: var(--primary); margin-bottom: 1rem;">Cambiar contraseña</h2>
+                        <form id="changePasswordForm" onsubmit="changePassword(event)">
+                            <div class="form-group">
+                                <label class="form-label">Contraseña actual</label>
+                                <input type="password" name="currentPassword" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nueva contraseña</label>
+                                <input type="password" name="newPassword" class="form-input" required minlength="6">
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">Actualizar</button>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function changePassword(event) {
+            event.preventDefault();
+            const form = event.target;
+            const current = form.currentPassword.value;
+            const neu = form.newPassword.value;
+            const hashCurr = await hashPassword(current);
+            if (hashCurr !== State.currentUser.passwordHash) {
+                alert('La contraseña actual no coincide');
+                return;
+            }
+            if (neu.length < 6) {
+                alert('La nueva contraseña debe tener al menos 6 caracteres');
+                return;
+            }
+            State.currentUser.passwordHash = await hashPassword(neu);
+            State.currentUser.forcePasswordChange = false;
+            saveDB();
+            alert('Contraseña cambiada correctamente');
+            State.currentView = 'dashboard';
+            render();
+        }
+
+        function renderAdminDashboard() {
+            // buttons will be toggled by attachEventListeners according to State.activeAdminTab
+            return `
+                ${renderHeader()}
+                <div class="container" style="padding-top: 2rem; padding-bottom: 3rem;">
+                    <div class="tabs">
+                        <button class="tab" data-tab="estadisticas">Estadísticas</button>
+                        <button class="tab" data-tab="trabajos">Trabajos</button>
+                        <button class="tab" data-tab="usuarios">Usuarios</button>
+                        <button class="tab" data-tab="ranking">Ranking</button>
+                    </div>
+
+                    <div id="tab-estadisticas" class="tab-content hidden">
+                        ${renderAdminStats()}
+                    </div>
+
+                    <div id="tab-trabajos" class="tab-content hidden">
+                        ${renderWorksManagement()}
+                    </div>
+
+                    <div id="tab-usuarios" class="tab-content hidden">
+                        ${renderUsersManagement()}
+                    </div>
+
+                    <div id="tab-ranking" class="tab-content hidden">
+                        ${renderRanking()}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderEvaluatorDashboard() {
+            if (State.selectedWork) {
+                return renderWorkEvaluation();
+            }
+
+            // show all works but indicate which ones are assigned to the current evaluator
+            const allWorks = DB.works;
+            const assignedIds = DB.assignments
+                .filter(a => a.evaluatorId === State.currentUser.id)
+                .map(a => a.workId);
+
+            return `
+                ${renderHeader()}
+                <div class="container" style="padding-top: 2rem; padding-bottom: 3rem;">
+                    <h2 style="margin-bottom: 1.5rem;">Trabajos disponibles</h2>
+
+                    ${allWorks.map(work => {
+                        const assigned = assignedIds.includes(work.id);
+                        const phase1 = assigned ? getWorkPhase1Review(work.id, State.currentUser.id) : null;
+                        const phase2 = assigned ? getWorkPhase2Review(work.id, State.currentUser.id) : null;
+                        const phase3 = assigned ? getWorkPhase3Review(work.id, State.currentUser.id) : null;
+
+                        let evaluationStatus = assigned ? 'Pendiente' : 'No asignado';
+                        let statusClass = assigned ? 'badge-pending' : 'badge-not-eligible';
+
+                        if (assigned) {
+                            if (phase1 && !phase1.passed) {
+                                evaluationStatus = 'Rechazado en Fase 1';
+                                statusClass = 'badge-not-eligible';
+                            } else if (phase2 && !phase2.isDraft) {
+                                evaluationStatus = 'Completado';
+                                statusClass = 'badge-completed';
+                            } else if (phase2 && phase2.isDraft) {
+                                evaluationStatus = 'Borrador guardado';
+                                statusClass = 'badge-in-progress';
+                            } else if (phase1) {
+                                evaluationStatus = 'Fase 1 completada';
+                                statusClass = 'badge-in-progress';
+                            }
+                        }
+
+                        return `
+                            <div class="card">
+                                <div class="card-header">
+                                    <div>
+                                        <div style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.25rem;">
+                                            ${work.code}
+                                        </div>
+                                        <h3 class="card-title">${work.title}</h3>
+                                    </div>
+                                </div>
+
+                                <div class="work-meta">
+                                    <span class="badge badge-in-progress">${getModalityText(work.modality)}</span>
+                                    <span class="badge badge-in-progress">${getPresentationTypeText(work.presentationType)}</span>
+                                    <span class="badge ${statusClass}">${evaluationStatus}</span>
+                                </div>
+
+                                <div style="margin-top: 1rem;">
+                                    <button class="btn btn-primary btn-small" onclick="selectWork('${work.id}')" ${assigned ? '' : 'disabled'}>
+                                        ${assigned ? (evaluationStatus === 'Completado' ? 'Ver evaluación' : 'Evaluar') : 'No asignado'}
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        function renderWorkEvaluation() {
+            const work = State.selectedWork;
+            const phase1 = getWorkPhase1Review(work.id, State.currentUser.id);
+            const phase2 = getWorkPhase2Review(work.id, State.currentUser.id);
+            const phase3 = getWorkPhase3Review(work.id, State.currentUser.id);
+
+            return `
+                ${renderHeader()}
+                <div class="container" style="padding-top: 2rem; padding-bottom: 3rem;">
+                    <button class="btn btn-outline btn-small" onclick="backToWorksList()" style="margin-bottom: 1rem;">
+                        ← Volver a mis trabajos
+                    </button>
+
+                    <div class="card">
+                        <div style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem;">
+                            ${work.code}
+                        </div>
+                        <h2 style="margin-bottom: 1rem;">${work.title}</h2>
+
+                        <div class="work-detail">
+                            <div class="work-detail-label">Modalidad</div>
+                            <div class="work-detail-value">${getModalityText(work.modality)}</div>
+                        </div>
+
+                        <div class="work-detail">
+                            <div class="work-detail-label">Tipo de presentación</div>
+                            <div class="work-detail-value">${getPresentationTypeText(work.presentationType)}</div>
+                        </div>
+
+                        <div class="work-detail">
+                            <div class="work-detail-label">Resumen</div>
+                            <div class="work-detail-value">${work.abstract}</div>
+                        </div>
+                        ${work.file ? `
+                        <div class="work-detail" style="margin-top:1rem;">
+                            <a href="${work.file.data}" download="${work.file.fileName}" class="btn btn-outline">Descargar texto completo</a>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    ${!phase1 ? renderPhase1Form(work) : 
+                      !phase1.passed ? renderPhase1Rejected(phase1) :
+                      (() => {
+                        // after passing phase1 we either show phase2 form or phase3 section
+                        if (State.editPhase2) return renderPhase2Form(work, phase2);
+                        if (State.editPhase3) return renderPhase3Section(work, phase2, phase3);
+
+                        if (phase2 && !phase2.isDraft) {
+                            // normally show phase3 when phase2 has been completed
+                            return renderPhase3Section(work, phase2, phase3);
+                        }
+                        // otherwise show phase2 (new or draft)
+                        return renderPhase2Form(work, phase2);
+                      })()}
+                </div>
+            `;
+        }
+
+        function renderPhase3Section(work, phase2Review, existingPhase3) {
+            const review = existingPhase3 || {};
+            
+            return `
+                ${renderPhase2ReadOnly(work, phase2Review)}
+                
+                <div class="card" style="margin-top: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Fase 3: Evaluación de la Presentación/Defensa</h3>
+                    
+                    <div class="alert alert-info">
+                        <div>
+                            Esta fase corresponde a la exposición o defensa del trabajo (máximo 30 puntos),
+                            independientemente del tipo de comunicación. Evalúa claridad, tiempo y calidad visual.
+                        </div>
+                    </div>
+
+                    ${review.isDraft === false && !State.editPhase3 ? `
+                        <div class="alert alert-success">
+                            <div>✓ Evaluación Fase 3 completada el ${formatDate(review.updatedAt)}</div>
+                        </div>
+                        ${renderPhase3ReadOnly(review)}
+                        <div style="margin-top:1rem;">
+                            <button class="btn btn-secondary btn-small" onclick="editPhase3()">Editar Fase 3</button>
+                        </div>
+                    ` : `
+                        ${review.isDraft ? `
+                            <div class="alert alert-warning">
+                                <div>⚠️ Tienes un borrador guardado de la Fase 3.</div>
+                            </div>
+                        ` : ''}
+
+                        ${State.editPhase3 ? `<button type="button" class="btn btn-outline btn-small" onclick="cancelEditPhase3()" style="margin-bottom:0.75rem;">Cancelar edición</button>` : ''}
+
+                        <form id="phase3Form" onsubmit="savePhase3(event, false)">
+                            <div class="form-group">
+                                <label class="form-label">C1. Claridad y estructura</label>
+                                <div style="background: var(--bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+                                    (presentación sencilla, lógica, transmite visión global)
+                                </div>
+                                <table style="width: 100%; margin-bottom: 1rem; font-size: 0.875rem;">
+                                    <tr style="background: var(--bg);">
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">EXCELENTE<br>7-8</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">BUENO<br>5-6</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">REGULAR<br>3-4</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">MALO<br>0-2</th>
+                                    </tr>
+                                </table>
+                                <div class="criterion-row">
+                                    <span class="criterion-max">Máximo: 8 puntos</span>
+                                    <input type="number" name="c1Clarity" class="form-input form-number" min="0" max="8" step="0.5" 
+                                           value="${review.c1Clarity || ''}" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">C2. Dominio y lenguaje</label>
+                                <div style="background: var(--bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+                                    (uso adecuado del lenguaje técnico, tono, síntesis)
+                                </div>
+                                <table style="width: 100%; margin-bottom: 1rem; font-size: 0.875rem;">
+                                    <tr style="background: var(--bg);">
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">EXCELENTE<br>7-8</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">BUENO<br>5-6</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">REGULAR<br>3-4</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">MALO<br>0-2</th>
+                                    </tr>
+                                </table>
+                                <div class="criterion-row">
+                                    <span class="criterion-max">Máximo: 8 puntos</span>
+                                    <input type="number" name="c2Mastery" class="form-input form-number" min="0" max="8" step="0.5" 
+                                           value="${review.c2Mastery || ''}" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">C3. Ajuste al tiempo</label>
+                                <div style="background: var(--bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+                                    (cumplimiento estricto del tiempo asignado)
+                                </div>
+                                <table style="width: 100%; margin-bottom: 1rem; font-size: 0.875rem;">
+                                    <tr style="background: var(--bg);">
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">EXCELENTE<br>6-7</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">BUENO<br>4-5</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">REGULAR<br>2-3</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">MALO<br>0-1</th>
+                                    </tr>
+                                </table>
+                                <div class="criterion-row">
+                                    <span class="criterion-max">Máximo: 7 puntos</span>
+                                    <input type="number" name="c3TimeManagement" class="form-input form-number" min="0" max="7" step="0.5" 
+                                           value="${review.c3TimeManagement || ''}" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">C4. Calidad del material visual</label>
+                                <div style="background: var(--bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+                                    (diapositivas limpias/legibles, gráficos claros y relevantes)
+                                </div>
+                                <table style="width: 100%; margin-bottom: 1rem; font-size: 0.875rem;">
+                                    <tr style="background: var(--bg);">
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">EXCELENTE<br>6-7</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">BUENO<br>4-5</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">REGULAR<br>2-3</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">MALO<br>0-1</th>
+                                    </tr>
+                                </table>
+                                <div class="criterion-row">
+                                    <span class="criterion-max">Máximo: 7 puntos</span>
+                                    <input type="number" name="c4VisualQuality" class="form-input form-number" min="0" max="7" step="0.5" 
+                                           value="${review.c4VisualQuality || ''}" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Comentarios sobre la presentación</label>
+                                <textarea class="form-textarea" name="comments" placeholder="Observaciones sobre la defensa oral...">${review.comments || ''}</textarea>
+                            </div>
+
+                            <div style="display: flex; gap: 1rem;">
+                                <button type="button" class="btn btn-secondary" onclick="savePhase3(event, true)" style="flex: 1;">
+                                    Guardar borrador
+                                </button>
+                                <button type="submit" class="btn btn-success" style="flex: 1;">
+                                    Enviar evaluación Fase 3
+                                </button>
+                            </div>
+                        </form>
+                    `}
+                </div>
+            `;
+        }
+
+        function renderPhase3ReadOnly(review) {
+            const total = calculatePhase3Score(review);
+            
+            return `
+                <div style="margin-top: 1rem;">
+                    <div class="criterion-row">
+                        <span>C1. Claridad y estructura</span>
+                        <strong>${review.c1Clarity} / 8</strong>
+                    </div>
+                    <div class="criterion-row">
+                        <span>C2. Dominio y lenguaje</span>
+                        <strong>${review.c2Mastery} / 8</strong>
+                    </div>
+                    <div class="criterion-row">
+                        <span>C3. Ajuste al tiempo</span>
+                        <strong>${review.c3TimeManagement} / 7</strong>
+                    </div>
+                    <div class="criterion-row">
+                        <span>C4. Calidad del material visual</span>
+                        <strong>${review.c4VisualQuality} / 7</strong>
+                    </div>
+
+                    <div class="score-display">
+                        Puntuación Total Fase 3: ${total} / 30
+                    </div>
+
+                    ${review.comments ? `
+                        <div style="margin-top: 1rem;">
+                            <strong>Comentarios:</strong>
+                            <p style="margin-top: 0.5rem;">${review.comments}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function renderPhase1Form(work) {
+            return `
+                <div class="card" style="margin-top: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Fase 1: Filtro Inicial</h3>
+
+                    <div class="alert alert-info">
+                        <div>
+                            Responde las siguientes 3 preguntas. Si marcas "NO" en cualquiera, el trabajo será rechazado automáticamente.
+                        </div>
+                    </div>
+
+                    <form id="phase1Form" onsubmit="savePhase1(event)">
+                        <div class="form-group">
+                            <label class="form-label">1. ¿El título es específico y refleja el contenido del trabajo?</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="q1" value="true" required>
+                                    <span>Sí</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="q1" value="false" required>
+                                    <span>No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">2. ¿El contenido es aplicable al campo de la lesión medular?</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="q2" value="true" required>
+                                    <span>Sí</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="q2" value="false" required>
+                                    <span>No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">3. ¿La estructura respeta las normas de presentación?</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="q3" value="true" required>
+                                    <span>Sí</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="q3" value="false" required>
+                                    <span>No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Comentarios (opcional)</label>
+                            <textarea class="form-textarea" name="comments" placeholder="Observaciones adicionales..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Guardar Fase 1</button>
+                    </form>
+                </div>
+            `;
+        }
+
+        function renderPhase1Rejected(review) {
+            return `
+                <div class="card" style="margin-top: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Fase 1: Filtro Inicial</h3>
+
+                    <div class="alert alert-danger">
+                        <div>
+                            <strong>Trabajo rechazado en Fase 1</strong><br>
+                            No cumple con los criterios iniciales de elegibilidad.
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <p><strong>Fecha de evaluación:</strong> ${formatDate(review.createdAt)}</p>
+                        ${review.comments ? `<p><strong>Comentarios:</strong> ${review.comments}</p>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPhase2Form(work, existingReview) {
+            const isInvestigacion = work.modality === 'investigacion';
+            const review = existingReview || {};
+            const editing = State.editPhase2;
+
+            return `
+                <div class="card" style="margin-top: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Fase 2: Evaluación Científica</h3>
+
+                    ${review.isDraft === false && !editing ? `
+                        <div class="alert alert-success">
+                            <div>✓ Evaluación completada y enviada el ${formatDate(review.updatedAt)}</div>
+                        </div>
+                        ${renderPhase2ReadOnly(work, review)}
+                    ` : `
+                        ${review.isDraft && !editing ? `
+                            <div class="alert alert-warning">
+                                <div>⚠️ Tienes un borrador guardado. Completa y envía la evaluación definitiva.</div>
+                            </div>
+                        ` : ''}
+
+                        ${editing ? `<button type="button" class="btn btn-outline btn-small" onclick="cancelEditPhase2()" style="margin-bottom:0.75rem;">Cancelar edición</button>` : ''}
+
+                        <form id="phase2Form" onsubmit="savePhase2(event, false)">
+                            <div class="form-group">
+                                <label class="form-label">C1. ${isInvestigacion ? 'Innovación y relevancia' : 'Pertinencia e innovación'}</label>
+                                <div style="background: var(--bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+                                    ${isInvestigacion 
+                                        ? '(originalidad, interés, alineación temática, definición del problema, necesidad del estudio)'
+                                        : '(interés del caso/experiencia, problema relevante, aportación diferencial)'}
+                                </div>
+                                <table style="width: 100%; margin-bottom: 1rem; font-size: 0.875rem;">
+                                    <tr style="background: var(--bg);">
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">EXCELENTE<br>9-10</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">BUENO<br>6-8</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">REGULAR<br>3-5</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">MALO<br>0-2</th>
+                                    </tr>
+                                </table>
+                                <div class="criterion-row">
+                                    <span class="criterion-max">Máximo: 10 puntos</span>
+                                    <input type="number" name="c1Innovation" class="form-input form-number" min="0" max="10" step="0.5" 
+                                           value="${review.c1Innovation || ''}" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">C2. Objetivos y ${isInvestigacion ? 'coherencia' : 'enfoque'}</label>
+                                <div style="background: var(--bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+                                    ${isInvestigacion 
+                                        ? '(claridad, concreción, coherencia con el alcance del estudio)'
+                                        : '(claridad, concreción, qué se quería resolver/mejorar y a quién aplica)'}
+                                </div>
+                                <table style="width: 100%; margin-bottom: 1rem; font-size: 0.875rem;">
+                                    <tr style="background: var(--bg);">
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">EXCELENTE<br>5</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">BUENO<br>3-4</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">REGULAR<br>2</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">MALO<br>0-1</th>
+                                    </tr>
+                                </table>
+                                <div class="criterion-row">
+                                    <span class="criterion-max">Máximo: 5 puntos</span>
+                                    <input type="number" name="c2Objectives" class="form-input form-number" min="0" max="5" step="0.5" 
+                                           value="${review.c2Objectives || ''}" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 1.125rem; margin-bottom: 1rem;">
+                                    C3. Rigor metodológico (${isInvestigacion ? '0-40' : '0-35'} puntos)
+                                </label>
+                                <div style="background: var(--bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+                                    ${isInvestigacion 
+                                        ? '(diseño, muestra/población, variables, validez, fiabilidad, credibilidad)'
+                                        : '(descripción estructurada, criterios/selección, intervención/proceso, medidas/indicadores)'}
+                                </div>
+
+                                ${isInvestigacion ? `
+                                    <div style="margin-bottom: 1.5rem;">
+                                        <h4 style="font-size: 1rem; margin-bottom: 0.5rem;">Diseño</h4>
+                                        <div style="background: var(--bg); padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; font-size: 0.8rem;">
+                                            <strong>Excelente (7-8):</strong> Diseño claramente justificado y apropiado<br>
+                                            <strong>Bueno (5-6):</strong> Diseño apropiado con justificación razonable<br>
+                                            <strong>Regular (3-4):</strong> Diseño explicado pero no totalmente justificado<br>
+                                            <strong>Malo (0-2):</strong> Diseño inapropiado o sin justificar
+                                        </div>
+                                        <div class="criterion-row">
+                                            <span class="criterion-max">Máximo: 8 puntos</span>
+                                            <input type="number" name="c3Design" class="form-input form-number" min="0" max="8" step="0.5" 
+                                                   value="${review.c3Design || ''}" required>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-bottom: 1.5rem;">
+                                        <h4 style="font-size: 1rem; margin-bottom: 0.5rem;">Muestra / Fuentes</h4>
+                                        <div style="background: var(--bg); padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; font-size: 0.8rem;">
+                                            <strong>Excelente (7-8):</strong> Descripción completa, criterios claros, representativa<br>
+                                            <strong>Bueno (5-6):</strong> Bien descrita y adecuada<br>
+                                            <strong>Regular (3-4):</strong> Descripción incompleta o poco representativa<br>
+                                            <strong>Malo (0-2):</strong> Inadecuada o sin descripción
+                                        </div>
+                                        <div class="criterion-row">
+                                            <span class="criterion-max">Máximo: 8 puntos</span>
+                                            <input type="number" name="c3Sample" class="form-input form-number" min="0" max="8" step="0.5" 
+                                                   value="${review.c3Sample || ''}" required>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-bottom: 1.5rem;">
+                                        <h4 style="font-size: 1rem; margin-bottom: 0.5rem;">Medición / Validez</h4>
+                                        <div style="background: var(--bg); padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; font-size: 0.8rem;">
+                                            <strong>Excelente (10-12):</strong> Variables claramente definidas, instrumentos validados<br>
+                                            <strong>Bueno (7-9):</strong> Instrumentos adecuados y justificados<br>
+                                            <strong>Regular (4-6):</strong> Variables/instrumentos poco claros<br>
+                                            <strong>Malo (0-3):</strong> Sin validez o fiabilidad justificada
+                                        </div>
+                                        <div class="criterion-row">
+                                            <span class="criterion-max">Máximo: 12 puntos</span>
+                                            <input type="number" name="c3Measurement" class="form-input form-number" min="0" max="12" step="0.5" 
+                                                   value="${review.c3Measurement || ''}" required>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-bottom: 1.5rem;">
+                                        <h4 style="font-size: 1rem; margin-bottom: 0.5rem;">Análisis</h4>
+                                        <div style="background: var(--bg); padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; font-size: 0.8rem;">
+                                            <strong>Excelente (10-12):</strong> Análisis riguroso y apropiado, bien explicado<br>
+                                            <strong>Bueno (7-9):</strong> Análisis adecuado y comprensible<br>
+                                            <strong>Regular (4-6):</strong> Análisis superficial o poco claro<br>
+                                            <strong>Malo (0-3):</strong> Análisis inadecuado o sin justificar
+                                        </div>
+                                        <div class="criterion-row">
+                                            <span class="criterion-max">Máximo: 12 puntos</span>
+                                            <input type="number" name="c3Analysis" class="form-input form-number" min="0" max="12" step="0.5" 
+                                                   value="${review.c3Analysis || ''}" required>
+                                        </div>
+                                    </div>
+                                ` : `
+                                    <div style="margin-bottom: 1.5rem;">
+                                        <h4 style="font-size: 1rem; margin-bottom: 0.5rem;">Descripción</h4>
+                                        <div style="background: var(--bg); padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; font-size: 0.8rem;">
+                                            <strong>Excelente (7-8):</strong> Descripción completa y estructurada<br>
+                                            <strong>Bueno (5-6):</strong> Bien descrito con detalles suficientes<br>
+                                            <strong>Regular (3-4):</strong> Descripción superficial<br>
+                                            <strong>Malo (0-2):</strong> Descripción confusa o incompleta
+                                        </div>
+                                        <div class="criterion-row">
+                                            <span class="criterion-max">Máximo: 8 puntos</span>
+                                            <input type="number" name="c3Description" class="form-input form-number" min="0" max="8" step="0.5" 
+                                                   value="${review.c3Description || ''}" required>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-bottom: 1.5rem;">
+                                        <h4 style="font-size: 1rem; margin-bottom: 0.5rem;">Selección / Contexto</h4>
+                                        <div style="background: var(--bg); padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; font-size: 0.8rem;">
+                                            <strong>Excelente (7-8):</strong> Criterios claros, contexto bien explicado<br>
+                                            <strong>Bueno (5-6):</strong> Selección justificada adecuadamente<br>
+                                            <strong>Regular (3-4):</strong> Criterios poco claros<br>
+                                            <strong>Malo (0-2):</strong> Sin justificación de selección
+                                        </div>
+                                        <div class="criterion-row">
+                                            <span class="criterion-max">Máximo: 8 puntos</span>
+                                            <input type="number" name="c3Selection" class="form-input form-number" min="0" max="8" step="0.5" 
+                                                   value="${review.c3Selection || ''}" required>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-bottom: 1.5rem;">
+                                        <h4 style="font-size: 1rem; margin-bottom: 0.5rem;">Intervención / Proceso</h4>
+                                        <div style="background: var(--bg); padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; font-size: 0.8rem;">
+                                            <strong>Excelente (9-10):</strong> Proceso detallado, replicable, fundamentado<br>
+                                            <strong>Bueno (6-8):</strong> Intervención bien explicada<br>
+                                            <strong>Regular (3-5):</strong> Proceso poco detallado<br>
+                                            <strong>Malo (0-2):</strong> Sin detalles del proceso
+                                        </div>
+                                        <div class="criterion-row">
+                                            <span class="criterion-max">Máximo: 10 puntos</span>
+                                            <input type="number" name="c3Intervention" class="form-input form-number" min="0" max="10" step="0.5" 
+                                                   value="${review.c3Intervention || ''}" required>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-bottom: 1.5rem;">
+                                        <h4 style="font-size: 1rem; margin-bottom: 0.5rem;">Indicadores / Resultados</h4>
+                                        <div style="background: var(--bg); padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; font-size: 0.8rem;">
+                                            <strong>Excelente (8-9):</strong> Indicadores claros y medidos objetivamente<br>
+                                            <strong>Bueno (5-7):</strong> Indicadores adecuados<br>
+                                            <strong>Regular (3-4):</strong> Mediciones poco específicas<br>
+                                            <strong>Malo (0-2):</strong> Sin indicadores claros
+                                        </div>
+                                        <div class="criterion-row">
+                                            <span class="criterion-max">Máximo: 9 puntos</span>
+                                            <input type="number" name="c3Indicators" class="form-input form-number" min="0" max="9" step="0.5" 
+                                                   value="${review.c3Indicators || ''}" required>
+                                        </div>
+                                    </div>
+                                `}
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">C4. Resultados y conclusiones</label>
+                                <div style="background: var(--bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+                                    ${isInvestigacion 
+                                        ? '(presentación, coherencia con objetivos, calidad/solidez de conclusiones)'
+                                        : '(resultados medibles o evidencias claras; reflexión crítica; limitaciones; solidez conclusiones)'}
+                                </div>
+                                <table style="width: 100%; margin-bottom: 1rem; font-size: 0.875rem;">
+                                    <tr style="background: var(--bg);">
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">EXCELENTE<br>9-10</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">BUENO<br>6-8</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">REGULAR<br>3-5</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">MALO<br>0-2</th>
+                                    </tr>
+                                </table>
+                                <div class="criterion-row">
+                                    <span class="criterion-max">Máximo: 10 puntos</span>
+                                    <input type="number" name="c4Results" class="form-input form-number" min="0" max="10" step="0.5" 
+                                           value="${review.c4Results || ''}" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">C5. Utilidad / Aplicabilidad</label>
+                                <div style="background: var(--bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+                                    (utilidad para futuras investigaciones, extrapolabilidad a otras unidades/hospitales)
+                                </div>
+                                <table style="width: 100%; margin-bottom: 1rem; font-size: 0.875rem;">
+                                    <tr style="background: var(--bg);">
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">EXCELENTE<br>${isInvestigacion ? '5' : '9-10'}</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">BUENO<br>${isInvestigacion ? '3-4' : '6-8'}</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">REGULAR<br>${isInvestigacion ? '2' : '3-5'}</th>
+                                        <th style="padding: 0.5rem; text-align: center; border: 1px solid var(--border);">MALO<br>${isInvestigacion ? '0-1' : '0-2'}</th>
+                                    </tr>
+                                </table>
+                                <div class="criterion-row">
+                                    <span class="criterion-max">Máximo: ${isInvestigacion ? '5' : '10'} puntos</span>
+                                    <input type="number" name="c5Utility" class="form-input form-number" min="0" max="${isInvestigacion ? '5' : '10'}" step="0.5" 
+                                           value="${review.c5Utility || ''}" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Observaciones del evaluador</label>
+                                <textarea class="form-textarea" name="comments" placeholder="Comentarios adicionales sobre este trabajo...">${review.comments || ''}</textarea>
+                            </div>
+
+                            <div style="display: flex; gap: 1rem;">
+                                <button type="button" class="btn btn-secondary" onclick="savePhase2(event, true)" style="flex: 1;">
+                                    Guardar borrador
+                                </button>
+                                <button type="submit" class="btn btn-success" style="flex: 1;">
+                                    Enviar evaluación definitiva
+                                </button>
+                            </div>
+                        </form>
+                    `}
+                </div>
+            `;
+        }
+
+        function renderPhase2ReadOnly(work, review) {
+            const { c3Subtotal, total, eligible } = calculatePhase2Score(review);
+            const isInvestigacion = work.modality === 'investigacion';
+
+            return `
+                <div style="margin-top: 1rem;">
+                    <div class="criterion-row">
+                        <span>C1. ${isInvestigacion ? 'Innovación y relevancia' : 'Pertinencia e innovación'}</span>
+                        <strong>${review.c1Innovation} / 10</strong>
+                    </div>
+                    <div class="criterion-row">
+                        <span>C2. Objetivos y ${isInvestigacion ? 'coherencia' : 'enfoque'}</span>
+                        <strong>${review.c2Objectives} / 5</strong>
+                    </div>
+                    <div class="criterion-row">
+                        <span>C3. Rigor metodológico</span>
+                        <strong>${c3Subtotal} / ${isInvestigacion ? '40' : '35'}</strong>
+                    </div>
+                    ${isInvestigacion ? `
+                        <div style="margin-left: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+                            <div>Diseño: ${review.c3Design} / 8</div>
+                            <div>Muestra: ${review.c3Sample} / 8</div>
+                            <div>Medición: ${review.c3Measurement} / 12</div>
+                            <div>Análisis: ${review.c3Analysis} / 12</div>
+                        </div>
+                    ` : `
+                        <div style="margin-left: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+                            <div>Descripción: ${review.c3Description} / 8</div>
+                            <div>Selección: ${review.c3Selection} / 8</div>
+                            <div>Intervención: ${review.c3Intervention} / 10</div>
+                            <div>Indicadores: ${review.c3Indicators} / 9</div>
+                        </div>
+                    `}
+                    <div class="criterion-row">
+                        <span>C4. Resultados y conclusiones</span>
+                        <strong>${review.c4Results} / 10</strong>
+                    </div>
+                    <div class="criterion-row">
+                        <span>C5. Utilidad / Aplicabilidad</span>
+                        <strong>${review.c5Utility} / ${isInvestigacion ? '5' : '10'}</strong>
+                    </div>
+
+                    <div class="score-display">
+                        Puntuación Total Fase 2: ${total.toFixed(2)} / 70
+                    </div>
+
+                    <div class="alert ${eligible ? 'alert-success' : 'alert-warning'}">
+                        <div>
+                            ${eligible 
+                                ? '✓ Trabajo elegible para premio (C3 >= umbral metodológico)' 
+                                : `⚠️ No elegible para premio (C3 < ${isInvestigacion ? '20' : '17'})`
+                            }
+                        </div>
+                    </div>
+
+                    ${review.comments ? `
+                        <div style="margin-top: 1rem;">
+                            <strong>Observaciones:</strong>
+                            <p style="margin-top: 0.5rem;">${review.comments}</p>
+                        </div>
+                    ` : ''}
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-secondary btn-small" onclick="editPhase2()">Editar Fase 2</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAdminStats() {
+            const totalWorks = DB.works.length;
+            const phase1Excluded = DB.phase1Reviews.filter(r => !r.passed).length;
+            const evaluated = DB.works.filter(w => {
+                const phase2Reviews = DB.phase2Reviews.filter(r => r.workId === w.id && !r.isDraft);
+                return phase2Reviews.length > 0;
+            }).length;
+            const pending = totalWorks - evaluated - phase1Excluded;
+
+            return `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${totalWorks}</div>
+                        <div class="stat-label">Total trabajos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${evaluated}</div>
+                        <div class="stat-label">Evaluados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${pending}</div>
+                        <div class="stat-label">Pendientes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${phase1Excluded}</div>
+                        <div class="stat-label">Excluidos Fase 1</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 1rem;">Resumen de evaluaciones</h3>
+                    <p style="color: var(--text-secondary);">
+                        Asignaciones totales: ${DB.assignments.length} entre ${DB.users.filter(u => u.role === 'evaluador' && u.active).length} evaluadores activos.
+                    </p>
+                </div>
+
+                <div class="card" style="margin-top:1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Registros de acceso recientes</h3>
+                    ${renderLoginAttempts()}
+                </div>
+
+                <div class="card" style="margin-top:1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Registros de acceso recientes</h3>
+                    ${renderLoginAttempts()}
+                </div>
+            `;
+        }
+
+        function renderWorksManagement() {
+            return `
+                <div class="card">
+                    <h3 style="margin-bottom: 1rem;">Gestión de Trabajos</h3>
+                    
+                    <button class="btn btn-primary" onclick="showCreateWorkForm()" style="margin-bottom: 1.5rem;">
+                        + Nuevo trabajo
+                    </button>
+
+                    <div id="workFormContainer" class="hidden" style="background: var(--bg); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                        <h4 id="workFormTitle" style="margin-bottom: 1rem;">Nuevo trabajo</h4>
+                        <form id="workForm" onsubmit="saveWork(event)">
+                            <input type="hidden" name="workId">
+
+                            <div class="form-group">
+                                <label class="form-label">Código</label>
+                                <input type="text" name="code" class="form-input" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Título</label>
+                                <input type="text" name="title" class="form-input" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Autores</label>
+                                <input type="text" name="authors" class="form-input">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Institución / Hospital</label>
+                                <input type="text" name="institution" class="form-input">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Modalidad</label>
+                                <select name="modality" class="form-select">
+                                    <option value="investigacion">Investigación/Revisión</option>
+                                    <option value="caso_clinico">Caso Clínico/Experiencia</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Tipo de presentación</label>
+                                <select name="presentationType" class="form-select">
+                                    <option value="oral">Comunicación Oral</option>
+                                    <option value="poster">Póster</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Resumen</label>
+                                <textarea name="abstract" class="form-textarea"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Archivo (PDF, DOC, etc.)</label>
+                                <input type="file" name="file" class="form-input">
+                            </div>
+
+                            <div style="display: flex; gap: 1rem;">
+                                <button type="button" class="btn btn-secondary" onclick="hideWorkForm()" style="flex: 1;">
+                                    Cancelar
+                                </button>
+                                <button type="submit" class="btn btn-success" id="workFormSubmitBtn" style="flex: 1;">
+                                    Guardar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div id="assignFormContainer" class="hidden" style="background: var(--bg); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                        <h4 style="margin-bottom:1rem;">Asignar evaluadores</h4>
+                        <form id="assignForm" onsubmit="saveAssignments(event)">
+                            <div id="assignCheckboxes" class="form-group" style="max-height:200px; overflow:auto;"></div>
+                            <div style="display:flex; gap:1rem;">
+                                <button type="button" class="btn btn-secondary" onclick="hideAssignForm()" style="flex:1;">Cancelar</button>
+                                <button type="submit" class="btn btn-success" style="flex:1;">Guardar</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="table-container" style="margin-top: 1.5rem;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Título</th>
+                                    <th>Autores</th>
+                                    <th>Institución</th>
+                                    <th>Modalidad</th>
+                                    <th>Tipo</th>
+                                    <th>Estado</th>
+                                    <th>Evaluaciones</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${DB.works.map(work => {
+                                    const phase2Reviews = DB.phase2Reviews.filter(r => r.workId === work.id && !r.isDraft);
+                                    const assignedCount = DB.assignments.filter(a => a.workId === work.id).length;
+                                    return `
+                                        <tr>
+                                            <td>${work.code}</td>
+                                            <td>${work.title}${work.file ? `<br><a href="${work.file.data}" download="${work.file.fileName}">Descargar</a>` : ''}</td>
+                                            <td>${work.authors}</td>
+                                            <td>${work.institution}</td>
+                                            <td>${getModalityText(work.modality)}</td>
+                                            <td>${getPresentationTypeText(work.presentationType)}</td>
+                                            <td>${getStatusBadge(work.status)}</td>
+                                            <td>${phase2Reviews.length} / ${assignedCount}</td>
+                                            <td>
+                                                <button class="btn btn-small" onclick="showEditWorkForm('${work.id}')">Editar</button>
+                                                <button class="btn btn-secondary btn-small" onclick="showAssignForm('${work.id}')">Asignar</button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderUsersManagement() {
+            const users = DB.users;
+
+            // we used to hideWorkForm() here, but DOM elements don't exist yet during rendering
+            // the visibility of the work form is managed by its own event handlers
+
+            return `
+                <div class="card">
+                    <h3 style="margin-bottom: 1rem;">Gestión de Usuarios</h3>
+                    
+                    <button class="btn btn-primary" onclick="showCreateUserForm()" style="margin-bottom: 1.5rem;">
+                        + Nuevo usuario
+                    </button>
+
+                    <div id="userFormContainer" class="hidden" style="background: var(--bg); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                        <h4 id="userFormTitle" style="margin-bottom: 1rem;">Nuevo usuario</h4>
+                        <form id="userForm" onsubmit="saveUser(event)">
+                            <input type="hidden" name="userId">
+
+                            <div class="form-group">
+                                <label class="form-label">Nombre completo</label>
+                                <input type="text" name="fullName" class="form-input" required placeholder="Dr./Dra. Nombre Apellidos">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Usuario</label>
+                                <input type="text" name="username" class="form-input" required placeholder="evaluador4" pattern="[a-z0-9]+" title="Solo letras minúsculas y números, sin espacios">
+                            </div>
+
+                            <div class="form-group" id="passwordGroup">
+                                <label class="form-label">Contraseña</label>
+                                <input type="text" name="password" class="form-input" placeholder="Contraseña inicial" minlength="6">
+                                <small style="color: var(--text-secondary); font-size: 0.875rem;">Mínimo 6 caracteres. Obligar al usuario a cambiarla a la primera sesión.</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Rol</label>
+                                <select name="role" class="form-select">
+                                    <option value="evaluador" selected>Evaluador</option>
+                                    <option value="admin">Administrador</option>
+                                </select>
+                            </div>
+
+                            <div style="display: flex; gap: 1rem;">
+                                <button type="button" class="btn btn-secondary" onclick="hideUserForm()" style="flex: 1;">
+                                    Cancelar
+                                </button>
+                                <button type="submit" class="btn btn-success" id="userFormSubmitBtn" style="flex: 1;">
+                                    Guardar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Usuario</th>
+                                    <th>Nombre completo</th>
+                                    <th>Rol</th>
+                                    <th>Activo</th>
+                                    <th>Cambiar pwd</th>
+                                    <th>Trabajos asignados</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${(() => {
+                                    const activeAdmins = users.filter(u => u.role === 'admin' && u.active);
+                                    return users.map(user => {
+                                        const assignedCount = DB.assignments.filter(a => a.evaluatorId === user.id).length;
+                                        const isOnlyActiveAdmin = user.role === 'admin' && user.active && activeAdmins.length === 1;
+                                        return `
+                                        <tr>
+                                            <td>${user.id}</td>
+                                            <td><strong>${user.username}</strong></td>
+                                            <td>${user.fullName}</td>
+                                            <td>${user.role}</td>
+                                            <td>${user.active ? 'Sí' : 'No'}</td>
+                                            <td>${user.forcePasswordChange ? 'Sí' : 'No'}</td>
+                                            <td>${assignedCount}</td>
+                                            <td>
+                                                <button class="btn btn-small" onclick="showEditUserForm('${user.id}')">Editar</button>
+                                                <button class="btn btn-secondary btn-small" onclick="assignUserToAllWorks('${user.id}')" title="Asigna este evaluador a todos los trabajos">Asignar a todos</button>
+                                                <button class="btn btn-secondary btn-small" onclick="resetPassword('${user.id}')">Reset pwd</button>
+                                                <button class="btn btn-warning btn-small" onclick="toggleActive('${user.id}')" ${isOnlyActiveAdmin ? 'disabled title="No puede desactivar al único administrador activo"' : ''}>
+                                                    ${user.active ? 'Desactivar' : 'Activar'}
+                                                </button>
+                                                <button class="btn btn-danger btn-small" onclick="deleteUser('${user.id}')" 
+                                                       ${assignedCount > 0 ? 'disabled title="No se puede eliminar: tiene trabajos asignados"' : ''} ${isOnlyActiveAdmin ? 'disabled title="No puede eliminar al único administrador activo"' : ''}>
+                                                    Eliminar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                    }).join('');
+                                })()}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    ${users.length === 0 ? `
+                        <div class="alert alert-info" style="margin-top: 1rem;">
+                            <div>No hay usuarios registrados todavía. Crea el primero usando el botón superior.</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function renderRanking() {
+            let worksWithScores = DB.works
+                .map(work => ({
+                    ...work,
+                    scores: getWorkFinalScores(work.id)
+                }))
+                .filter(w => w.scores !== null);
+
+            // apply filters from State.filters
+            if (State.filters.modality && State.filters.modality !== 'all') {
+                worksWithScores = worksWithScores.filter(w => w.modality === State.filters.modality);
+            }
+            if (State.filters.presentationType && State.filters.presentationType !== 'all') {
+                worksWithScores = worksWithScores.filter(w => w.presentationType === State.filters.presentationType);
+            }
+            if (State.filters.status === 'eligible') {
+                worksWithScores = worksWithScores.filter(w => w.scores.eligibleForAward);
+            } else if (State.filters.status === 'not-eligible') {
+                worksWithScores = worksWithScores.filter(w => !w.scores.eligibleForAward);
+            }
+
+            worksWithScores = worksWithScores.sort((a, b) => parseFloat(b.scores.finalScore) - parseFloat(a.scores.finalScore));
+
+            // we no longer show descriptive statistics; proceed directly to filters and ranking
+
+            const eligibleCount = worksWithScores.filter(w => w.scores.eligibleForAward).length;
+            const investigacionWorks = worksWithScores.filter(w => w.modality === 'investigacion');
+            const casoClinicoWorks = worksWithScores.filter(w => w.modality === 'caso_clinico');
+            const oralWorks = worksWithScores.filter(w => w.presentationType === 'oral');
+            const posterWorks = worksWithScores.filter(w => w.presentationType === 'poster');
+
+            return `
+                <div class="filter-bar">
+                    <select id="filterModality" class="form-select">
+                        <option value="all" ${State.filters.modality === 'all' ? 'selected' : ''}>Todas las modalidades</option>
+                        <option value="investigacion" ${State.filters.modality === 'investigacion' ? 'selected' : ''}>Investigación/Revisión</option>
+                        <option value="caso_clinico" ${State.filters.modality === 'caso_clinico' ? 'selected' : ''}>Caso Clínico/Experiencia</option>
+                    </select>
+                    <select id="filterPresentation" class="form-select">
+                        <option value="all" ${State.filters.presentationType === 'all' ? 'selected' : ''}>Todos los tipos</option>
+                        <option value="oral" ${State.filters.presentationType === 'oral' ? 'selected' : ''}>Comunicación Oral</option>
+                        <option value="poster" ${State.filters.presentationType === 'poster' ? 'selected' : ''}>Póster</option>
+                    </select>
+                    <select id="filterEligibility" class="form-select">
+                        <option value="all" ${State.filters.status === 'all' ? 'selected' : ''}>Elegibilidad: Todos</option>
+                        <option value="eligible" ${State.filters.status === 'eligible' ? 'selected' : ''}>Solo elegibles</option>
+                        <option value="not-eligible" ${State.filters.status === 'not-eligible' ? 'selected' : ''}>No elegibles</option>
+                    </select>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 1rem;">Ranking Final de Trabajos</h3>
+
+                    ${worksWithScores.length === 0 ? `
+                        <div class="alert alert-info">
+                            <div>No hay trabajos con evaluaciones completadas todavía.</div>
+                        </div>
+                    ` : `
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Pos</th>
+                                        <th>Código</th>
+                                        <th>Título</th>
+                                        <th>Autores</th>
+                                        <th>Institución</th>
+                                        <th>Modalidad</th>
+                                        <th>Tipo</th>
+                                        <th>Fase 2</th>
+                                        <th>Fase 3</th>
+                                        <th>Final</th>
+                                        <th>Premio</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${worksWithScores.map((work, index) => `
+                                        <tr>
+                                            <td><strong>${index + 1}</strong></td>
+                                            <td>${work.code}</td>
+                                            <td>${work.title}</td>
+                                            <td>${work.authors}</td>
+                                            <td>${work.institution}</td>
+                                            <td><span class="badge badge-in-progress">${getModalityText(work.modality)}</span></td>
+                                            <td><span class="badge badge-in-progress">${getPresentationTypeText(work.presentationType)}</span></td>
+                                            <td>${work.scores.avgPhase2}</td>
+                                            <td>${work.scores.avgPhase3}</td>
+                                            <td><strong>${work.scores.finalScore}</strong></td>
+                                            <td>
+                                                ${work.scores.eligibleForAward 
+                                                    ? '<span class="badge badge-completed">✓ Elegible</span>' 
+                                                    : '<span class="badge badge-not-eligible">No elegible</span>'}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        function renderHeader() {
+            return `
+                <header class="header">
+                    <div class="header-content">
+                        <div>
+                            <h1>ASELME - Evaluación Científica</h1>
+                            <div style="font-size: 0.875rem; opacity: 0.9;">
+                                ${State.currentUser.role === 'admin' ? 'Panel de Administración' : 'Panel de Evaluador'}
+                            </div>
+                        </div>
+                        <div class="user-info">
+                            <span style="font-size: 0.875rem;">${State.currentUser.fullName}</span>
+                            <button class="btn btn-small" style="background: rgba(255,255,255,0.2); color: white;" onclick="logout()">
+                                Cerrar sesión
+                            </button>
+                        </div>
+                    </div>
+                </header>
+            `;
+        }
+
+        // ============================================
+        // MANEJADORES DE EVENTOS
+        // ============================================
+        function attachEventListeners() {
+            // Tabs: remember active tab so filtering doesn't reset view
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    const tabName = e.target.dataset.tab;
+                    State.activeAdminTab = tabName;
+                    
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                    
+                    e.target.classList.add('active');
+                    document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+                });
+            });
+            // ensure correct tab is active after render
+            const active = State.activeAdminTab || 'estadisticas';
+            const activeBtn = document.querySelector(`.tab[data-tab="${active}"]`);
+            if (activeBtn) activeBtn.click();
+
+            // Filtros del ranking
+            const filterModality = document.getElementById('filterModality');
+            const filterPresentation = document.getElementById('filterPresentation');
+            const filterEligibility = document.getElementById('filterEligibility');
+
+            if (filterModality) {
+                [filterModality, filterPresentation, filterEligibility].forEach(filter => {
+                    filter.addEventListener('change', applyRankingFilters);
+                });
+            }
+        }
+
+        function applyRankingFilters() {
+            const modality = document.getElementById('filterModality').value;
+            const presentation = document.getElementById('filterPresentation').value;
+            const eligibility = document.getElementById('filterEligibility').value;
+            State.filters.modality = modality;
+            State.filters.presentationType = presentation;
+            State.filters.status = eligibility;
+            render();
+        }
+
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            console.log('handleLogin called');
+            try {
+                if (!DB) {
+                    console.error('handleLogin: DB is not initialized');
+                    alert('Error interno: base de datos no disponible. Recarga la página.');
+                    return;
+                }
+                console.log('DB at login', DB);
+                const username = document.getElementById('loginUsername').value.trim().toLowerCase();
+                const password = document.getElementById('loginPassword').value;
+
+                const user = DB.users && DB.users.find(u => u.username === username);
+            if (!user) {
+                alert('Usuario o contraseña incorrectos');
+                return;
+            }
+            if (!user.active) {
+                alert('La cuenta está desactivada. Contacta al administrador.');
+                return;
+            }
+
+            const hash = await hashPassword(password);
+            console.log('login hash', hash, 'stored', user.passwordHash);
+            // allow recovery of admin default password if needed
+            const defaultAdminHash = await hashPassword('admin123');
+            if (user.username === 'admin' && hash === defaultAdminHash && user.passwordHash !== defaultAdminHash) {
+                console.warn('Restoring admin default password');
+                user.passwordHash = defaultAdminHash;
+                user.forcePasswordChange = true;
+                saveDB();
+            }
+
+            if (hash !== user.passwordHash) {
+                alert('Usuario o contraseña incorrectos');
+                return;
+            }
+
+            State.currentUser = user;
+            // primer acceso o reestablecimiento
+            if (user.forcePasswordChange) {
+                State.currentView = 'changePassword';
+            } else {
+                State.currentView = 'dashboard';
+            }
+            render();
+            
+            } catch (e) {
+                console.error('handleLogin exception', e);
+                alert('Error durante inicio de sesión: ' + (e.message || e));
+            }
+        }
+
+        function logout() {
+            State.currentUser = null;
+            State.currentView = 'login';
+            State.selectedWork = null;
+            render();
+        }
+
+        function editPhase2() {
+            State.editPhase2 = true;
+            State.editPhase3 = false;
+            render();
+        }
+
+        function editPhase3() {
+            State.editPhase3 = true;
+            render();
+        }
+
+        function cancelEditPhase2() {
+            State.editPhase2 = false;
+            render();
+        }
+
+        function cancelEditPhase3() {
+            State.editPhase3 = false;
+            render();
+        }
+
+        // emergency helper: callable from console only
+        async function emergencyResetAdmin(username, newPassword='admin123') {
+            const admin = DB.users.find(u => u.username === username && u.role === 'admin');
+            if (!admin) {
+                console.error('Admin not found', username);
+                return;
+            }
+            admin.passwordHash = await hashPassword(newPassword);
+            admin.forcePasswordChange = true;
+            admin.failedAttempts = 0;
+            admin.lockedUntil = null;
+            admin.active = true;
+            saveDB();
+            console.warn(`Admin ${username} password set to default and account activated`);
+        }
+
+        // recreate a default admin account (useful if all admins were removed or corrupted)
+        async function emergencyCreateDefaultAdmin() {
+            const existing = DB.users.find(u => u.role === 'admin');
+            if (existing) {
+                console.warn('Administrators already exist, skipping creation');
+                return;
+            }
+            const pwd = 'admin123';
+            const hash = await hashPassword(pwd);
+            const newAdmin = { id: 'admin-1', username: 'admin', fullName: 'Administrador ASELME', role: 'admin', active: true, passwordHash: hash, forcePasswordChange: true };
+            DB.users.push(newAdmin);
+            saveDB();
+            console.warn('Default admin created with password "admin123"');
+        }
+
+        function selectWork(workId) {
+            // evaluadores sólo pueden ver trabajos asignados
+            if (State.currentUser && State.currentUser.role === 'evaluador') {
+                const assigned = DB.assignments.some(a => a.workId === workId && a.evaluatorId === State.currentUser.id);
+                if (!assigned) {
+                    alert('No tienes permiso para acceder a ese trabajo.');
+                    return;
+                }
+            }
+            State.selectedWork = DB.works.find(w => w.id === workId);
+            State.editPhase2 = false;
+            State.editPhase3 = false;
+            render();
+        }
+
+        function backToWorksList() {
+            State.selectedWork = null;
+            render();
+        }
+
+        function savePhase1(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+
+            const q1 = formData.get('q1') === 'true';
+            const q2 = formData.get('q2') === 'true';
+            const q3 = formData.get('q3') === 'true';
+            const passed = q1 && q2 && q3;
+
+            const review = {
+                id: 'phase1-' + Date.now(),
+                workId: State.selectedWork.id,
+                evaluatorId: State.currentUser.id,
+                q1TitleSpecific: q1,
+                q2ApplicableField: q2,
+                q3StructureNorms: q3,
+                passed: passed,
+                comments: formData.get('comments'),
+                createdAt: new Date()
+            };
+
+            DB.phase1Reviews.push(review);
+            saveDB();
+
+            if (passed) {
+                alert('✓ Fase 1 completada. El trabajo pasa al filtro inicial. Ahora puedes proceder con la evaluación científica.');
+            } else {
+                alert('⚠️ El trabajo ha sido rechazado en Fase 1 por no cumplir los criterios iniciales.');
+            }
+
+            render();
+        }
+
+        function savePhase2(event, isDraft) {
+            State.editPhase2 = false;
+            event.preventDefault();
+            const form = document.getElementById('phase2Form');
+            const formData = new FormData(form);
+
+            const work = State.selectedWork;
+            const isInvestigacion = work.modality === 'investigacion';
+
+            const review = {
+                id: 'phase2-' + Date.now(),
+                workId: work.id,
+                evaluatorId: State.currentUser.id,
+                modality: work.modality,
+                c1Innovation: parseFloat(formData.get('c1Innovation')),
+                c2Objectives: parseFloat(formData.get('c2Objectives')),
+                c4Results: parseFloat(formData.get('c4Results')),
+                c5Utility: parseFloat(formData.get('c5Utility')),
+                comments: formData.get('comments'),
+                isDraft: isDraft,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
+
+            if (isInvestigacion) {
+                review.c3Design = parseFloat(formData.get('c3Design'));
+                review.c3Sample = parseFloat(formData.get('c3Sample'));
+                review.c3Measurement = parseFloat(formData.get('c3Measurement'));
+                review.c3Analysis = parseFloat(formData.get('c3Analysis'));
+            } else {
+                review.c3Description = parseFloat(formData.get('c3Description'));
+                review.c3Selection = parseFloat(formData.get('c3Selection'));
+                review.c3Intervention = parseFloat(formData.get('c3Intervention'));
+                review.c3Indicators = parseFloat(formData.get('c3Indicators'));
+            }
+
+            // Eliminar evaluación anterior si existe
+            const existingIndex = DB.phase2Reviews.findIndex(
+                r => r.workId === work.id && r.evaluatorId === State.currentUser.id
+            );
+            if (existingIndex !== -1) {
+                DB.phase2Reviews.splice(existingIndex, 1);
+            }
+
+            DB.phase2Reviews.push(review);
+            saveDB();
+
+            if (isDraft) {
+                alert('✓ Borrador guardado correctamente. Puedes continuar más tarde.');
+            } else {
+                const { eligible } = calculatePhase2Score(review);
+                alert(`✓ Evaluación Fase 2 enviada correctamente.\n\n${eligible ? 'El trabajo es elegible para premio.' : 'El trabajo no alcanza el umbral metodológico para premio.'}`);
+            }
+
+            render();
+        }
+
+        function savePhase3(event, isDraft) {
+            State.editPhase3 = false;
+            event.preventDefault();
+            const form = document.getElementById('phase3Form');
+            const formData = new FormData(form);
+
+            const work = State.selectedWork;
+
+            const review = {
+                id: 'phase3-' + Date.now(),
+                workId: work.id,
+                evaluatorId: State.currentUser.id,
+                c1Clarity: parseFloat(formData.get('c1Clarity')),
+                c2Mastery: parseFloat(formData.get('c2Mastery')),
+                c3TimeManagement: parseFloat(formData.get('c3TimeManagement')),
+                c4VisualQuality: parseFloat(formData.get('c4VisualQuality')),
+                comments: formData.get('comments'),
+                isDraft: isDraft,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
+
+            // Eliminar evaluación anterior si existe
+            const existingIndex = DB.phase3Reviews.findIndex(
+                r => r.workId === work.id && r.evaluatorId === State.currentUser.id
+            );
+            if (existingIndex !== -1) {
+                DB.phase3Reviews.splice(existingIndex, 1);
+            }
+
+            DB.phase3Reviews.push(review);
+            saveDB();
+
+            if (isDraft) {
+                alert('✓ Borrador Fase 3 guardado correctamente.');
+            } else {
+                const total = calculatePhase3Score(review);
+                alert(`✓ Evaluación Fase 3 completada.\n\nPuntuación defensa oral: ${total}/30 puntos`);
+            }
+
+            render();
+        }
+
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+        window.addEventListener('DOMContentLoaded', async () => {
+            console.log('Initializing DB...');
+            DB = await loadDB();
+            console.log('Loaded DB:', DB);
+            if (!DB) {
+                // if loadDB somehow returned undefined/null, create fresh default
+                console.warn('DB was null, creating default');
+                DB = await loadDB();
+            }
+            saveDB(); // guarantee persistence of initial structure
+            render();
+        });
+
+        function showCreateUserForm() {
+            editingUserId = null;
+            const container = document.getElementById('userFormContainer');
+            container.classList.remove('hidden');
+            document.getElementById('userFormTitle').textContent = 'Nuevo usuario';
+            const form = document.getElementById('userForm');
+            form.reset();
+            form.username.disabled = false;
+            document.getElementById('passwordGroup').classList.remove('hidden');
+            form.password.required = true;
+            document.getElementById('userFormSubmitBtn').textContent = 'Crear';
+            hideWorkForm();
+        }
+
+        function hideUserForm() {
+            document.getElementById('userFormContainer').classList.add('hidden');
+            const form = document.getElementById('userForm');
+            form.reset();
+            editingUserId = null;
+            // restablecer etiqueta y requisitos de contraseña
+            const pwdLabel = document.getElementById('passwordGroup').querySelector('label');
+            pwdLabel.textContent = 'Contraseña';
+            document.getElementById('passwordGroup').classList.remove('hidden');
+            form.password.required = true;
+            form.username.disabled = false;
+        }
+
+        function showEditUserForm(userId) {
+            const user = DB.users.find(u => u.id === userId);
+            if (!user) return;
+            editingUserId = userId;
+            const container = document.getElementById('userFormContainer');
+            container.classList.remove('hidden');
+            document.getElementById('userFormTitle').textContent = 'Editar usuario';
+            const form = document.getElementById('userForm');
+            form.userId.value = userId;
+            form.fullName.value = user.fullName;
+            form.username.value = user.username;
+            form.username.disabled = true;
+            form.role.value = user.role;
+            // contraseña es opcional en edición
+            document.getElementById('passwordGroup').querySelector('label').textContent = 'Nueva contraseña';
+            form.password.required = false;
+            document.getElementById('userFormSubmitBtn').textContent = 'Guardar cambios';
+        }
+
+        async function saveUser(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const userId = formData.get('userId');
+            const fullName = formData.get('fullName').trim();
+            const username = formData.get('username').toLowerCase().trim();
+            const role = formData.get('role');
+            const password = formData.get('password');
+            hideWorkForm();
+
+            if (!userId) {
+                // creación
+                if (DB.users.find(u => u.username === username)) {
+                    alert('Ya existe un usuario con ese nombre de usuario.');
+                    return;
+                }
+                const pwdHash = await hashPassword(password);
+                DB.users.push({
+                    id: 'user-' + Date.now(),
+                    username,
+                    passwordHash: pwdHash,
+                    fullName,
+                    role,
+                    active: true,
+                    forcePasswordChange: true,
+                    failedAttempts: 0,
+                    lockedUntil: null
+                });
+                alert(`Usuario creado correctamente.\nUsuario: ${username}`);
+            } else {
+                const user = DB.users.find(u => u.id === userId);
+                if (!user) {
+                    alert('Usuario no encontrado');
+                    return;
+                }
+                user.fullName = fullName;
+                user.role = role;
+                if (password) {
+                    user.passwordHash = await hashPassword(password);
+                    user.forcePasswordChange = true;
+                }
+                alert('Datos de usuario actualizados.');
+            }
+            saveDB();
+            hideUserForm();
+            render();
+        }
+
+        function deleteUser(userId) {
+            if (!confirm('¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer.')) {
+                return;
+            }
+            const userIndex = DB.users.findIndex(u => u.id === userId);
+            if (userIndex === -1) {
+                alert('Usuario no encontrado.');
+                return;
+            }
+            const user = DB.users[userIndex];
+            const hasAssignments = DB.assignments.some(a => a.evaluatorId === userId);
+            if (hasAssignments) {
+                alert('No se puede eliminar: el usuario tiene trabajos asignados.');
+                return;
+            }
+            if (user.role === 'admin' && user.active) {
+                const otherAdmins = DB.users.filter(u => u.role === 'admin' && u.active && u.id !== userId);
+                if (otherAdmins.length === 0) {
+                    alert('No se puede eliminar: debe existir al menos un administrador activo.');
+                    return;
+                }
+            }
+            DB.users.splice(userIndex, 1);
+            saveDB();
+            alert('Usuario eliminado.');
+            render();
+        }
+
+        async function resetPassword(userId) {
+            const user = DB.users.find(u => u.id === userId);
+            if (!user) return;
+            const newPwd = prompt('Introduce nueva contraseña para ' + user.username + ':');
+            if (!newPwd) return;
+            user.passwordHash = await hashPassword(newPwd);
+            user.forcePasswordChange = true;
+            // clear any lockout state so the usuario puede entrar inmediatamente
+            user.failedAttempts = 0;
+            user.lockedUntil = null;
+            saveDB();
+            alert('Contraseña restablecida. El usuario deberá cambiarla en el próximo acceso.');
+            render();
+        }
+
+        function toggleActive(userId) {
+            const user = DB.users.find(u => u.id === userId);
+            if (!user) return;
+            // prevent deactivating last active admin
+            if (user.role === 'admin' && user.active) {
+                const otherAdmins = DB.users.filter(u => u.role === 'admin' && u.active && u.id !== userId);
+                if (otherAdmins.length === 0) {
+                    alert('No se puede desactivar: debe existir al menos un administrador activo.');
+                    return;
+                }
+            }
+            user.active = !user.active;
+            saveDB();
+            render();
+        }
+
+        // -------------------- Gestión de trabajos --------------------
+        function showCreateWorkForm() {
+            const container = document.getElementById('workFormContainer');
+            container.classList.remove('hidden');
+            document.getElementById('workFormTitle').textContent = 'Nuevo trabajo';
+            const form = document.getElementById('workForm');
+            form.reset();
+            form.workId.value = '';
+            document.getElementById('workFormSubmitBtn').textContent = 'Guardar';
+            hideAssignForm();
+        }
+
+        function hideWorkForm() {
+            const container = document.getElementById('workFormContainer');
+            container.classList.add('hidden');
+            document.getElementById('workForm').reset();
+        }
+
+        function showEditWorkForm(workId) {
+            const work = DB.works.find(w => w.id === workId);
+            if (!work) return;
+            showCreateWorkForm();
+            const form = document.getElementById('workForm');
+            form.workId.value = workId;
+            form.code.value = work.code;
+            form.title.value = work.title;
+            form.authors.value = work.authors || '';
+            form.institution.value = work.institution || '';
+            form.modality.value = work.modality;
+            form.presentationType.value = work.presentationType;
+            form.abstract.value = work.abstract || '';
+            document.getElementById('workFormTitle').textContent = 'Editar trabajo';
+            document.getElementById('workFormSubmitBtn').textContent = 'Actualizar';
+        }
+
+        async function saveWork(event) {
+            event.preventDefault();
+            const form = event.target;
+            const data = new FormData(form);
+            const workId = data.get('workId');
+            const code = data.get('code').trim();
+            const title = data.get('title').trim();
+            const authors = data.get('authors').trim();
+            const institution = data.get('institution').trim();
+            const modality = data.get('modality');
+            const presentationType = data.get('presentationType');
+            const abstract = data.get('abstract').trim();
+            const fileInput = form.file;
+
+            let fileObj = null;
+            if (fileInput && fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                fileObj = await new Promise((res, rej) => {
+                    reader.onload = () => res({ fileName: file.name, data: reader.result });
+                    reader.onerror = rej;
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            if (!workId) {
+                // nuevo
+                DB.works.push({
+                    id: 'work-' + Date.now(),
+                    code,
+                    title,
+                    authors,
+                    institution,
+                    modality,
+                    presentationType,
+                    abstract,
+                    file: fileObj,
+                    status: 'pendiente',
+                    internalNotes: '',
+                    createdAt: new Date()
+                });
+                alert('Trabajo creado correctamente.');
+            } else {
+                const work = DB.works.find(w => w.id === workId);
+                if (!work) return;
+                work.code = code;
+                work.title = title;
+                work.authors = authors;
+                work.institution = institution;
+                work.modality = modality;
+                work.presentationType = presentationType;
+                work.abstract = abstract;
+                if (fileObj) work.file = fileObj;
+                alert('Trabajo actualizado.');
+            }
+            saveDB();
+            hideWorkForm();
+            render();
+        }
+
+        function showAssignForm(workId) {
+            const container = document.getElementById('assignFormContainer');
+            container.classList.remove('hidden');
+            const checkboxes = document.getElementById('assignCheckboxes');
+            checkboxes.innerHTML = '';
+            const evaluators = DB.users.filter(u => u.role === 'evaluador' && u.active);
+            const assignedIds = DB.assignments.filter(a => a.workId === workId).map(a => a.evaluatorId);
+            evaluators.forEach(ev => {
+                const checked = assignedIds.includes(ev.id) ? 'checked' : '';
+                const html = `
+                    <label class="radio-label" style="border:1px solid var(--border); margin-bottom:0.5rem;">
+                        <input type="checkbox" name="evaluator" value="${ev.id}" ${checked}>
+                        ${ev.username} - ${ev.fullName}
+                    </label>
+                `;
+                checkboxes.insertAdjacentHTML('beforeend', html);
+            });
+            container.dataset.workId = workId;
+            hideWorkForm();
+        }
+
+        function hideAssignForm() {
+            const container = document.getElementById('assignFormContainer');
+            container.classList.add('hidden');
+            container.dataset.workId = '';
+        }
+
+        function saveAssignments(event) {
+            event.preventDefault();
+            const container = document.getElementById('assignFormContainer');
+            const workId = container.dataset.workId;
+            const selected = Array.from(document.querySelectorAll('#assignCheckboxes input[name="evaluator"]:checked'))
+                                  .map(i => i.value);
+            // remove existing assignments for the work
+            DB.assignments = DB.assignments.filter(a => a.workId !== workId);
+            // add new ones
+            selected.forEach(evId => {
+                DB.assignments.push({ id: 'assign-' + Date.now() + Math.random(), workId, evaluatorId: evId });
+            });
+            saveDB();
+            hideAssignForm();
+            alert('Asignaciones actualizadas.');
+            render();
+        }
+
+        function assignUserToAllWorks(userId) {
+            if (!confirm('¿Asignar este evaluador a todos los trabajos existentes?')) return;
+            DB.works.forEach(w => {
+                const exists = DB.assignments.some(a => a.workId === w.id && a.evaluatorId === userId);
+                if (!exists) {
+                    DB.assignments.push({ id: 'assign-' + Date.now() + Math.random(), workId: w.id, evaluatorId: userId });
+                }
+            });
+            saveDB();
+            alert('El usuario ha sido asignado a todos los trabajos.');
+            render();
+        }
+
+        // Exponer funciones globales
+        window.handleLogin = handleLogin;
+        window.logout = logout;
+        window.selectWork = selectWork;
+        window.backToWorksList = backToWorksList;
+        window.savePhase1 = savePhase1;
+        window.savePhase2 = savePhase2;
+        window.savePhase3 = savePhase3;
+        window.showCreateUserForm = showCreateUserForm;
+        window.hideUserForm = hideUserForm;
+        window.showEditUserForm = showEditUserForm;
+        window.saveUser = saveUser;
+        window.deleteUser = deleteUser;
+        window.resetPassword = resetPassword;
+        window.toggleActive = toggleActive;
+        // funciones de trabajo/ asignación
+        window.showCreateWorkForm = showCreateWorkForm;
+        window.hideWorkForm = hideWorkForm;
+        window.showEditWorkForm = showEditWorkForm;
+        window.saveWork = saveWork;
+        window.showAssignForm = showAssignForm;
+        window.hideAssignForm = hideAssignForm;
+        window.saveAssignments = saveAssignments;
+        // emergency helpers exposed for console use
+        window.emergencyResetAdmin = emergencyResetAdmin;
+        window.emergencyCreateDefaultAdmin = emergencyCreateDefaultAdmin;
+        // La primera renderización ocurre tras cargar la base de datos en DOMContentLoaded
+    </script>
+</body>
+</html>
+
