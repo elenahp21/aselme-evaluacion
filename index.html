@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <head>
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASELME - Sistema de Evaluación Científica</title>
        <style>
         :root {
             --primary: #0284c7;
@@ -490,8 +493,11 @@
         // ============================================
         // BASE DE DATOS PERSISTENTE + AUTENTICACIÓN
         // ============================================
-        const STORAGE_KEY = 'aselme_db_v2';
-
+    const STORAGE_KEY = 'aselme_db_v2';
+const SUPABASE_URL = 'https://ryxectncehvcchqiacwn.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_M-ClCjo2TolI-w9ktvoi1A_kPQYZjX0';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+console.log('Supabase conectado:', !!supabaseClient);
         // Revive fechas al parsear JSON
         function reviver(key, value) {
             if (typeof value === 'string') {
@@ -500,88 +506,134 @@
             }
             return value;
         }
-
+async function hashPassword(pwd) {
+    const enc = new TextEncoder();
+    const data = enc.encode(pwd);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
         // Hash SHA‑256 en el navegador
-        async function hashPassword(pwd) {
-            const enc = new TextEncoder();
-            const data = enc.encode(pwd);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+       async function loadDB() {
+    let supabaseUsers = null;
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('users')
+            .select('*');
+
+        if (error) {
+            console.error('Error leyendo users desde Supabase:', error);
+        } else {
+            supabaseUsers = (data || []).map(u => ({
+                id: u.id,
+                username: u.username,
+                password: u.password || null,
+                passwordHash: u.passwordHash || null,
+                fullName: u.full_name || '',
+                role: u.role || 'evaluador',
+                active: u.active ?? true,
+                forcePasswordChange: u.forcePasswordChange ?? false
+            }));
+            console.log('Usuarios cargados desde Supabase:', supabaseUsers);
         }
+    } catch (e) {
+        console.error('Fallo conectando con Supabase users:', e);
+    }
 
-        let DB = null; // se cargará en la inicialización
+    const json = localStorage.getItem(STORAGE_KEY);
+    if (json) {
+        try {
+            const parsed = JSON.parse(json, reviver);
 
-        async function loadDB() {
-            const json = localStorage.getItem(STORAGE_KEY);
-            if (json) {
-                try {
-                    const parsed = JSON.parse(json, reviver);
+            if (supabaseUsers) {
+                parsed.users = supabaseUsers;
+            }
 
-                        // migration: if any user has legacy `password` field, hash it and remove.
-                    let upgraded = false;
-                    for (const u of parsed.users || []) {
-                        if (u.password && !u.passwordHash) {
-                            u.passwordHash = await hashPassword(u.password);
-                            delete u.password;
-                            u.forcePasswordChange = true; // force change after migration
-                            upgraded = true;
-                        }
-                    }
-                    // ensure login tracking arrays exist
-                    if (!parsed.loginAttempts) {
-                        parsed.loginAttempts = [];
-                        upgraded = true;
-                    }
-                    // Ensure at least one active admin exists
-                    const hasActiveAdmin = (parsed.users || []).some(u => u.role === 'admin' && u.active);
-                    if (!hasActiveAdmin) {
-                        // try reactivate any admin or create default
-                        let admin = (parsed.users || []).find(u => u.role === 'admin');
-                        if (admin) {
-                            admin.active = true;
-                            console.warn('Reactivating existing admin account');
-                        } else {
-                            const adminHash = await hashPassword('admin123');
-                            parsed.users = parsed.users || [];
-                            parsed.users.push({ id: 'admin-1', username: 'admin', passwordHash: adminHash,
-                                                  fullName: 'Administrador ASELME', role: 'admin', active: true, forcePasswordChange: true });
-                            console.warn('No admin found in DB; default admin created');
-                        }
-                        upgraded = true;
-                    }
-                    if (upgraded) {
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
-                    }
-                    return parsed;
-                } catch (e) {
-                    console.error('Error leyendo base de datos, reinstalando vacía:', e);
-                    // if parsing fails, clear the broken entry and fall through to default
-                    localStorage.removeItem(STORAGE_KEY);
+            // migration: if any user has legacy `password` field, hash it and remove.
+            let upgraded = false;
+            for (const u of parsed.users || []) {
+                if (u.password && !u.passwordHash) {
+                    u.passwordHash = await hashPassword(u.password);
+                    delete u.password;
+                    u.forcePasswordChange = true;
+                    upgraded = true;
                 }
             }
 
-            // Si no existe nada, generamos un dataset por defecto con admin
-            const adminHash = await hashPassword('admin123');
+            // ensure login tracking arrays exist
+            if (!parsed.loginAttempts) {
+                parsed.loginAttempts = [];
+                upgraded = true;
+            }
 
-            return {
-                users: [
-                    { id: 'admin-1', username: 'admin', passwordHash: adminHash,
-                      fullName: 'Administrador ASELME', role: 'admin', active: true, forcePasswordChange: true }
-                ],
-                works: [],
-                assignments: [],
-                phase1Reviews: [],
-                phase2Reviews: [],
-                phase3Reviews: [],
-                settings: {
-                    phase1Open: true,
-                    phase2Open: true,
-                    phase3Open: true
-                },
-                loginAttempts: []
-            };
+            // Ensure at least one active admin exists
+            const hasActiveAdmin = (parsed.users || []).some(
+                u => u.role === 'admin' && u.active
+            );
+
+            if (!hasActiveAdmin) {
+                let admin = (parsed.users || []).find(u => u.role === 'admin');
+                if (admin) {
+                    admin.active = true;
+                    console.warn('Reactivating existing admin account');
+                } else {
+                    const adminHash = await hashPassword('admin123');
+                    parsed.users = parsed.users || [];
+                    parsed.users.push({
+                        id: 'admin-1',
+                        username: 'admin',
+                        passwordHash: adminHash,
+                        fullName: 'Administrador ASELME',
+                        role: 'admin',
+                        active: true,
+                        forcePasswordChange: true
+                    });
+                    console.warn('No admin found in DB; default admin created');
+                }
+                upgraded = true;
+            }
+
+            if (upgraded) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+            }
+
+            return parsed;
+        } catch (e) {
+            console.error('Error leyendo base de datos local, reinstalando vacía:', e);
+            localStorage.removeItem(STORAGE_KEY);
         }
+    }
+
+    const adminHash = await hashPassword('admin123');
+
+    return {
+        users: supabaseUsers && supabaseUsers.length > 0
+            ? supabaseUsers
+            : [
+                {
+                    id: 'admin-1',
+                    username: 'admin',
+                    passwordHash: adminHash,
+                    fullName: 'Administrador ASELME',
+                    role: 'admin',
+                    active: true,
+                    forcePasswordChange: true
+                }
+            ],
+        works: [],
+        assignments: [],
+        phase1Reviews: [],
+        phase2Reviews: [],
+        phase3Reviews: [],
+        settings: {
+            phase1Open: true,
+            phase2Open: true,
+            phase3Open: true
+        },
+        loginAttempts: []
+    };
+}
 
         function saveDB() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
@@ -774,7 +826,7 @@
                     <div class="card" style="max-width: 400px; width: 100%;">
                         <div style="text-align: center; margin-bottom: 2rem;">
                             <h1 style="color: var(--primary); margin-bottom: 0.5rem;">ASELME</h1>
-                            <p style="color: var(--text-secondary);">Sistema de Evaluación Científica-PRUEBA</p>
+                            <p style="color: var(--text-secondary);">Sistema de Evaluación Científica</p>
                         </div>
 
                         <form id="loginForm" onsubmit="handleLogin(event)">
@@ -819,39 +871,42 @@
                 </div>
             `;
         }
+async function changePassword(event) {
+    event.preventDefault();
+    const form = event.target;
+    const current = form.currentPassword.value;
+    const neu = form.newPassword.value;
 
-        async function changePassword(event) {
-            event.preventDefault();
-            const form = event.target;
-            const current = form.currentPassword.value;
-            const neu = form.newPassword.value;
-            const hashCurr = await hashPassword(current);
-            if (hashCurr !== State.currentUser.passwordHash) {
-                alert('La contraseña actual no coincide');
-                return;
-            }
-            if (neu.length < 6) {
-                alert('La nueva contraseña debe tener al menos 6 caracteres');
-                return;
-            }
-            State.currentUser.passwordHash = await hashPassword(neu);
-            State.currentUser.forcePasswordChange = false;
-            saveDB();
-            alert('Contraseña cambiada correctamente');
-            State.currentView = 'dashboard';
-            render();
-        }
+    const hashCurr = await hashPassword(current);
+    if (hashCurr !== State.currentUser.passwordHash) {
+        alert('La contraseña actual no coincide');
+        return;
+    }
 
-        function renderAdminDashboard() {
-            // buttons will be toggled by attachEventListeners according to State.activeAdminTab
-            return `
-                ${renderHeader()}
-                <div class="container" style="padding-top: 2rem; padding-bottom: 3rem;">
-                    <div class="tabs">
-                        <button class="tab" data-tab="estadisticas">Estadísticas</button>
-                        <button class="tab" data-tab="trabajos">Trabajos</button>
-                        <button class="tab" data-tab="usuarios">Usuarios</button>
-                        <button class="tab" data-tab="ranking">Ranking</button>
+    if (neu.length < 6) {
+        alert('La nueva contraseña debe tener al menos 6 caracteres');
+        return;
+    }
+
+    State.currentUser.passwordHash = await hashPassword(neu);
+    State.currentUser.forcePasswordChange = false;
+
+    await supabaseClient
+        .from('users')
+        .update({
+            passwordHash: State.currentUser.passwordHash,
+            forcePasswordChange: false,
+            password: null
+        })
+        .eq('id', State.currentUser.id);
+
+    saveDB();
+    alert('Contraseña cambiada correctamente');
+    render();
+}
+         
+
+ <button class="tab" data-tab="ranking">Ranking</button>
                     </div>
 
                     <div id="tab-estadisticas" class="tab-content hidden">
@@ -2312,7 +2367,8 @@
         window.addEventListener('DOMContentLoaded', async () => {
             console.log('Initializing DB...');
             DB = await loadDB();
-            console.log('Loaded DB:', DB);
+           console.log('Loaded DB users:', DB.users);
+           console.table(DB.users);
             if (!DB) {
                 // if loadDB somehow returned undefined/null, create fresh default
                 console.warn('DB was null, creating default');
@@ -2536,36 +2592,65 @@
                 });
             }
 
-            if (!workId) {
-                // nuevo
-                DB.works.push({
-                    id: 'work-' + Date.now(),
-                    code,
-                    title,
-                    authors,
-                    institution,
-                    modality,
-                    presentationType,
-                    abstract,
-                    file: fileObj,
-                    status: 'pendiente',
-                    internalNotes: '',
-                    createdAt: new Date()
-                });
-                alert('Trabajo creado correctamente.');
-            } else {
-                const work = DB.works.find(w => w.id === workId);
-                if (!work) return;
-                work.code = code;
-                work.title = title;
-                work.authors = authors;
-                work.institution = institution;
-                work.modality = modality;
-                work.presentationType = presentationType;
-                work.abstract = abstract;
-                if (fileObj) work.file = fileObj;
-                alert('Trabajo actualizado.');
-            }
+    if (!workId) {
+    const newWork = {
+        id: 'work-' + Date.now(),
+        code,
+        title,
+        authors,
+        institution,
+        modality,
+        presentationType,
+        abstract,
+        file: fileObj,
+        status: 'pendiente',
+        internalNotes: '',
+        createdAt: new Date()
+    };
+
+    DB.works.push(newWork);
+
+    const result = await supabaseClient
+    .from('works')
+    .insert({
+        id: newWork.id,
+        code: newWork.code,
+        title: newWork.title,
+        authors: newWork.authors,
+        institution: newWork.institution,
+        modality: newWork.modality,
+        presentation_type: newWork.presentationType,
+        abstract: newWork.abstract,
+        status: newWork.status,
+        internal_notes: newWork.internalNotes
+    });
+
+console.log('Resultado insert works:', result);
+
+const { error } = result;
+
+    if (error) {
+        console.error('Error guardando trabajo en Supabase:', error);
+        alert('El trabajo se guardó localmente, pero falló al guardarse en Supabase.');
+        return;
+    }
+
+    alert('Trabajo creado correctamente.');
+} else {
+    const work = DB.works.find(w => w.id === workId);
+    if (!work) return;
+
+    work.code = code;
+    work.title = title;
+    work.authors = authors;
+    work.institution = institution;
+    work.modality = modality;
+    work.presentationType = presentationType;
+    work.abstract = abstract;
+    if (fileObj) work.file = fileObj;
+
+    alert('Trabajo actualizado.');
+}
             saveDB();
             hideWorkForm();
             render();
