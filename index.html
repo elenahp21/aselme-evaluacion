@@ -167,17 +167,33 @@
       if (!supabaseClient) return null;
       try {
         const { data, error } = await supabaseClient.from(table).select('*');
-        if (error) { console.error('Supabase ' + table + ':', error.message); return null; }
+        if (error) {
+          console.error('Supabase', table, error.code, error.message);
+          if (error.code === '42501' || (error.message||'').includes('policy') || (error.message||'').includes('permission')) {
+            throw new Error('RLS activo en "' + table + '": ve a Supabase → Authentication → Policies y añade permiso SELECT para anon, o desactiva RLS en esa tabla.');
+          }
+          if (error.code === '42P01') throw new Error('La tabla "' + table + '" no existe en Supabase.');
+          throw new Error('Error en "' + table + '": ' + error.message);
+        }
         return (data||[]).map(mapper);
-      } catch(e) { console.warn('Supabase ' + table + ' falló:', e.message); return null; }
+      } catch(e) {
+        console.error('sbFetch', table, e.message);
+        throw e;
+      }
     }
 
     async function sbUpsert(table, row) {
       if (!supabaseClient) return;
       try {
         const { error } = await supabaseClient.from(table).upsert(row, { onConflict: 'id' });
-        if (error) console.error('Supabase upsert ' + table + ':', error.message);
-      } catch(e) { console.warn('Supabase upsert ' + table + ' falló:', e.message); }
+        if (error) {
+          console.error('Supabase upsert', table, JSON.stringify(error));
+          throw new Error(error.message + (error.hint ? ' — ' + error.hint : '') + ' (código: ' + error.code + ')');
+        }
+      } catch(e) {
+        console.error('sbUpsert', table, e.message);
+        throw e;
+      }
     }
 
     async function sbDelete(table, id) {
@@ -1081,7 +1097,7 @@
 
     function savePhase1(event) { if (event) event.preventDefault(); doSavePhase1(); }
 
-    function doSavePhase1() {
+    async function doSavePhase1() {
       try {
         const form = document.getElementById('phase1Form');
         const q1el = form.querySelector('input[name="q1"]:checked');
@@ -1107,7 +1123,7 @@
       return el ? el.value : '';
     }
 
-    function doSavePhase2(isDraft) {
+    async function doSavePhase2(isDraft) {
       try {
         State.editPhase2 = false;
         const form = document.getElementById('phase2Form');
@@ -1148,7 +1164,7 @@
 
     function savePhase3(event, isDraft) { if (event) event.preventDefault(); doSavePhase3(isDraft); }
 
-    function doSavePhase3(isDraft) {
+    async function doSavePhase3(isDraft) {
       try {
         State.editPhase3 = false;
         const form = document.getElementById('phase3Form');
@@ -1405,8 +1421,12 @@
           const newWork = { id: 'work-' + Date.now(), code, title, authors, institution, modality, presentationType, abstract, file: fileObj, status: 'pendiente', internalNotes: '', createdAt: new Date() };
           DB.works.push(newWork);
           saveDB();
-          await sbUpsert('works', { id:newWork.id, code, title, authors, institution, modality, presentation_type:presentationType, abstract, status:'pendiente', internal_notes:'' });
-          alert('Trabajo creado correctamente.');
+          try {
+            await sbUpsert('works', { id:newWork.id, code, title, authors, institution, modality, presentation_type:presentationType, abstract, status:'pendiente', internal_notes:'' });
+            alert('Trabajo creado correctamente.');
+          } catch(sbErr) {
+            alert('Trabajo guardado localmente.\n\nError Supabase: ' + sbErr.message + '\n\n→ Solución probable: desactiva RLS en la tabla "works" en Supabase, o añade una policy para anon.');
+          }
         } else {
           // EDITAR
           const work = DB.works.find(w => w.id === workId);
@@ -1448,7 +1468,7 @@
       doSaveAssignments();
     }
 
-    function doSaveAssignments() {
+    async function doSaveAssignments() {
       const btn = document.getElementById('assignFormBtn');
       if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
       try {
@@ -1502,9 +1522,31 @@
     // INICIALIZACION
     // ============================================
     window.addEventListener('DOMContentLoaded', async () => {
-      DB = await loadDB();
-      saveDB();
-      render();
+      try {
+        DB = await loadDB();
+        saveDB();
+        render();
+      } catch(e) {
+        console.error('Init error:', e);
+        // Fallback: usar solo localStorage
+        try {
+          supabaseClient = null;
+          const json = localStorage.getItem(STORAGE_KEY);
+          DB = json ? JSON.parse(json) : null;
+          if (!DB || !DB.users) {
+            DB = { users:[{ id:'admin-1', username:'admin', passwordHash: await hashPassword('admin123'), fullName:'Administrador ASELME', role:'admin', active:true, forcePasswordChange:true }], works:[], assignments:[], phase1Reviews:[], phase2Reviews:[], phase3Reviews:[], settings:{ phase1Open:true, phase2Open:true, phase3Open:true }, loginAttempts:[] };
+          }
+          render();
+          setTimeout(() => {
+            const banner = document.createElement('div');
+            banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fef3c7;color:#92400e;padding:0.75rem 1rem;text-align:center;font-size:0.875rem;z-index:9999;border-bottom:2px solid #f59e0b;';
+            banner.innerHTML = '⚠️ Supabase no disponible — modo local. <strong>' + e.message + '</strong> <button onclick="this.parentElement.remove()" style="margin-left:1rem;background:#92400e;color:white;border:none;border-radius:4px;padding:2px 8px;cursor:pointer;">✕</button>';
+            document.body.prepend(banner);
+          }, 300);
+        } catch(e2) {
+          document.getElementById('app').innerHTML = '<div style="padding:2rem;text-align:center;color:#dc2626;"><h2>Error al iniciar ASELME</h2><pre style="text-align:left;background:#fee2e2;padding:1rem;border-radius:8px;overflow:auto;">' + e.message + '\n' + e2.message + '</pre><button onclick="localStorage.clear();location.reload()" style="margin-top:1rem;padding:0.75rem 1.5rem;background:#3b82f6;color:white;border:none;border-radius:8px;cursor:pointer;">Reintentar</button></div>';
+        }
+      }
     });
 
     Object.assign(window, {
@@ -1520,4 +1562,3 @@
   </script>
 </body>
 </html>
-
