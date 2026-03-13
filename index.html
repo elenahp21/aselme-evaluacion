@@ -103,7 +103,7 @@
     // Supabase es OPCIONAL — si la clave es incorrecta, todo funciona con localStorage
     const SUPABASE_URL = 'https://frzqeldwpfpxashkcixb.supabase.co';
     // ▼▼▼ PEGA AQUÍ TU ANON KEY COMPLETA (empieza por eyJ...) ▼▼▼
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyenFlbGR3cGZweGFzaGtjaXhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4Mjk4MzEsImV4cCI6MjA4ODQwNTgzMX0.z2vN5RgmnzCl50xuiWhKC8KTCmQfPgcMLxRn8XmtJpQ'; // Supabase → Settings → API → anon public
+    const SUPABASE_ANON_KEY = 'PEGA_AQUI_TU_ANON_KEY'; // Supabase → Settings → API → anon public
     let supabaseClient = null;
     try {
       if (typeof supabase !== 'undefined' && SUPABASE_ANON_KEY.length > 40) {
@@ -1521,7 +1521,15 @@
 
     // Helper de emergencia (solo consola)
     async function resetAdminFromLogin() {
-      if (!confirm('Esto restablecerá la contraseña del admin a "admin123". ¿Continuar?')) return;
+      // Pedir clave de emergencia para evitar que cualquier usuario lo use
+      const secret = prompt('Introduce el código de emergencia para restablecer el admin:');
+      if (!secret) return;
+      const secretHash = await hashPassword(secret);
+      const EMERGENCY_HASH = await hashPassword('ASELME2024reset');
+      if (secretHash !== EMERGENCY_HASH) {
+        alert('Código incorrecto.');
+        return;
+      }
       if (!DB) { alert('Error: DB no cargada'); return; }
       let admin = DB.users.find(u => u.role === 'admin');
       if (!admin) {
@@ -1532,6 +1540,7 @@
       admin.forcePasswordChange = true;
       admin.active = true;
       saveDB();
+      await sbUpsert('users', { id:admin.id, username:admin.username, password_hash:admin.passwordHash, full_name:admin.fullName, role:admin.role, active:true, force_password_change:true });
       alert('Contraseña restablecida a "admin123". Ahora inicia sesión.');
       render();
     }
