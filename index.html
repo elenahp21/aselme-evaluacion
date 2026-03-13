@@ -1525,7 +1525,7 @@
       const secret = prompt('Introduce el código de emergencia para restablecer el admin:');
       if (!secret) return;
       const secretHash = await hashPassword(secret);
-      const EMERGENCY_HASH = await hashPassword('ASELME2025reset');
+      const EMERGENCY_HASH = await hashPassword('ASELME2026reset');
       if (secretHash !== EMERGENCY_HASH) {
         alert('Código incorrecto.');
         return;
