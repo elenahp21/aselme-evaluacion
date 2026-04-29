@@ -1452,7 +1452,7 @@
             if (btn) { btn.disabled = false; btn.textContent = 'Guardar'; }
             return;
           }
-          const newWork = { id: 'work-' + Date.now(), code, title, authors, institution, modality, presentationType, abstract, file: fileObj, status: 'pendiente', internalNotes: '', createdAt: new Date() };
+          const newWork = { id: 'work-' + Date.now(), code, title, authors, institution, modality, presentationType, abstract, file: fileUrl: fileUrl, fileName: fileName, status: 'pendiente', internalNotes: '', createdAt: new Date() };
           DB.works.push(newWork);
           saveDB();
           try {
@@ -1466,8 +1466,7 @@
           const work = DB.works.find(w => w.id === workId);
           if (!work) { showErr('Trabajo no encontrado.'); if (btn) { btn.disabled = false; btn.textContent = 'Actualizar'; } return; }
           Object.assign(work, { code, title, authors, institution, modality, presentationType, abstract });
-          if (fileObj) work.file = fileObj;
-          saveDB();
+                    saveDB();
           if (fileUrl) { work.fileUrl = fileUrl; work.fileName = fileName; }
           await sbUpsert('works', { id:work.id, code, title, authors, institution, modality, presentation_type:presentationType, abstract, status:work.status||'pendiente', internal_notes:work.internalNotes||'', file_url:work.fileUrl||null, file_name:work.fileName||null });
           alert('Trabajo actualizado correctamente.');
