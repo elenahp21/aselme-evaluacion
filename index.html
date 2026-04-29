@@ -490,8 +490,7 @@
                 <td>${work.authors || ''}</td><td>${work.institution || ''}</td>
                 <td>${getModalityText(work.modality)}</td><td>${getPresentationTypeText(work.presentationType)}</td>
                 <td>${getStatusBadge(work.status)}</td><td>${p2} / ${ac}</td>
-                <td><button class="btn btn-small" onclick="showEditWorkForm('${work.id}')">Editar</button> <button class="btn btn-secondary btn-small" onclick="showAssignForm('${work.id}')">Asignar</button></td>
-              </tr>`;
+         <button class="btn btn-small" onclick="showEditWorkForm('${work.id}')">Editar</button> <button class="btn btn-secondary btn-small" onclick="showAssignForm('${work.id}')">Asignar</button> <button class="btn btn-small" style="background:var(--error,#dc2626);color:white;" onclick="deleteWork('${work.id}')">Eliminar</button>
             }).join('')}</tbody>
           </table>
         </div>
@@ -1380,7 +1379,28 @@
       const c = document.getElementById('workFormContainer');
       if (c) c.classList.add('hidden');
     }
-
+async function deleteWork(workId) {
+  if (!confirm('¿Seguro que quieres eliminar este trabajo? Se borrarán también sus asignaciones y evaluaciones.')) return;
+  try {
+    if (supabaseClient) {
+      await supabaseClient.from('phase1_reviews').delete().eq('work_id', workId);
+      await supabaseClient.from('phase2_reviews').delete().eq('work_id', workId);
+      await supabaseClient.from('phase3_reviews').delete().eq('work_id', workId);
+      await supabaseClient.from('assignments').delete().eq('work_id', workId);
+      await supabaseClient.from('works').delete().eq('id', workId);
+    }
+    DB.works = DB.works.filter(w => w.id !== workId);
+    DB.assignments = DB.assignments.filter(a => a.workId !== workId);
+    DB.phase1Reviews = (DB.phase1Reviews||[]).filter(r => r.workId !== workId);
+    DB.phase2Reviews = (DB.phase2Reviews||[]).filter(r => r.workId !== workId);
+    DB.phase3Reviews = (DB.phase3Reviews||[]).filter(r => r.workId !== workId);
+    saveDB();
+    alert('Trabajo eliminado correctamente.');
+    render();
+  } catch(e) {
+    alert('Error al eliminar: ' + e.message);
+  }
+}
     function showEditWorkForm(workId) {
       const work = DB.works.find(w => w.id === workId);
       if (!work) return;
