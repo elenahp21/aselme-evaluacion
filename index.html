@@ -546,35 +546,65 @@
       </div>`;
     }
 
-    function renderRanking() {
-      let works = DB.works.map(w => ({ ...w, scores: getWorkFinalScores(w.id) })).filter(w => w.scores !== null);
-      if (State.filters.modality !== 'all') works = works.filter(w => w.modality === State.filters.modality);
-      if (State.filters.presentationType !== 'all') works = works.filter(w => w.presentationType === State.filters.presentationType);
-      if (State.filters.status === 'eligible') works = works.filter(w => w.scores.eligibleForAward);
-      else if (State.filters.status === 'not-eligible') works = works.filter(w => !w.scores.eligibleForAward);
-      works.sort((a, b) => parseFloat(b.scores.finalScore) - parseFloat(a.scores.finalScore));
-      return `
-        <div class="filter-bar">
-          <select id="filterModality" class="form-select"><option value="all" ${State.filters.modality==='all'?'selected':''}>Todas las modalidades</option><option value="investigacion" ${State.filters.modality==='investigacion'?'selected':''}>Investigación/Revisión</option><option value="caso_clinico" ${State.filters.modality==='caso_clinico'?'selected':''}>Caso Clínico/Experiencia</option></select>
-          <select id="filterPresentation" class="form-select"><option value="all" ${State.filters.presentationType==='all'?'selected':''}>Todos los tipos</option><option value="oral" ${State.filters.presentationType==='oral'?'selected':''}>Comunicación Oral</option><option value="poster" ${State.filters.presentationType==='poster'?'selected':''}>Póster</option></select>
-          <select id="filterEligibility" class="form-select"><option value="all" ${State.filters.status==='all'?'selected':''}>Elegibilidad: Todos</option><option value="eligible" ${State.filters.status==='eligible'?'selected':''}>Solo elegibles</option><option value="not-eligible" ${State.filters.status==='not-eligible'?'selected':''}>No elegibles</option></select>
-        </div>
-        <div class="card"><h3 style="margin-bottom:1rem;">Ranking Final de Trabajos</h3>
-          ${works.length === 0
-            ? `<div class="alert alert-info"><div>No hay trabajos con evaluaciones completadas.</div></div>`
-            : `<div class="table-container"><table>
-                <thead><tr><th>Pos</th><th>Código</th><th>Título</th><th>Autores</th><th>Institución</th><th>Modalidad</th><th>Tipo</th><th>Fase 2</th><th>Fase 3</th><th>Final</th><th>Premio</th></tr></thead>
-                <tbody>${works.map((w, i) => `<tr>
-                  <td><strong>${i+1}</strong></td><td>${w.code}</td><td>${w.title}</td><td>${w.authors||''}</td><td>${w.institution||''}</td>
-                  <td><span class="badge badge-in-progress">${getModalityText(w.modality)}</span></td>
-                  <td><span class="badge badge-in-progress">${getPresentationTypeText(w.presentationType)}</span></td>
-                  <td>${w.scores.avgPhase2}</td><td>${w.scores.avgPhase3}</td><td><strong>${w.scores.finalScore}</strong></td>
-                  <td>${w.scores.eligibleForAward ? '<span class="badge badge-completed">✓ Elegible</span>' : '<span class="badge badge-not-eligible">No elegible</span>'}</td>
-                </tr>`).join('')}</tbody>
-              </table></div>`}
-        </div>`;
-    }
+   function renderRanking() {
+  let works = DB.works.map(w => ({ ...w, scores: getWorkFinalScores(w.id) })).filter(w => w.scores !== null);
+  if (State.filters.modality !== 'all') works = works.filter(w => w.modality === State.filters.modality);
+  if (State.filters.presentationType !== 'all') works = works.filter(w => w.presentationType === State.filters.presentationType);
+  if (State.filters.status === 'eligible') works = works.filter(w => w.scores.eligibleForAward);
+  else if (State.filters.status === 'not-eligible') works = works.filter(w => !w.scores.eligibleForAward);
+  works.sort((a, b) => parseFloat(b.scores.finalScore) - parseFloat(a.scores.finalScore));
+  return `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:1rem;">
+      <button class="btn btn-success" onclick="downloadRankingExcel()">⬇ Descargar Excel</button>
+    </div>
+    <div class="filter-bar">
+      <select id="filterModality" class="form-select"><option value="all" ${State.filters.modality==='all'?'selected':''}>Todas las modalidades</option><option value="investigacion" ${State.filters.modality==='investigacion'?'selected':''}>Investigación/Revisión</option><option value="caso_clinico" ${State.filters.modality==='caso_clinico'?'selected':''}>Caso Clínico/Experiencia</option></select>
+      <select id="filterPresentation" class="form-select"><option value="all" ${State.filters.presentationType==='all'?'selected':''}>Todos los tipos</option><option value="oral" ${State.filters.presentationType==='oral'?'selected':''}>Comunicación Oral</option><option value="poster" ${State.filters.presentationType==='poster'?'selected':''}>Póster</option></select>
+      <select id="filterEligibility" class="form-select"><option value="all" ${State.filters.status==='all'?'selected':''}>Elegibilidad: Todos</option><option value="eligible" ${State.filters.status==='eligible'?'selected':''}>Solo elegibles</option><option value="not-eligible" ${State.filters.status==='not-eligible'?'selected':''}>No elegibles</option></select>
+    </div>
+    <div class="card"><h3 style="margin-bottom:1rem;">Ranking Final de Trabajos</h3>
+      ${works.length === 0
+        ? `<div class="alert alert-info"><div>No hay trabajos con evaluaciones completadas.</div></div>`
+        : `<div class="table-container"><table>
+            <thead><tr><th>Pos</th><th>Código</th><th>Título</th><th>Autores</th><th>Institución</th><th>Modalidad</th><th>Tipo</th><th>Fase 2</th><th>Fase 3</th><th>Final</th><th>Premio</th></tr></thead>
+            <tbody>${works.map((w, i) => `<tr>
+              <td><strong>${i+1}</strong></td><td>${w.code}</td><td>${w.title}</td><td>${w.authors||''}</td><td>${w.institution||''}</td>
+              <td><span class="badge badge-in-progress">${getModalityText(w.modality)}</span></td>
+              <td><span class="badge badge-in-progress">${getPresentationTypeText(w.presentationType)}</span></td>
+              <td>${w.scores.avgPhase2}</td><td>${w.scores.avgPhase3}</td><td><strong>${w.scores.finalScore}</strong></td>
+              <td>${w.scores.eligibleForAward ? '<span class="badge badge-completed">✓ Elegible</span>' : '<span class="badge badge-not-eligible">No elegible</span>'}</td>
+            </tr>`).join('')}</tbody>
+          </table></div>`}
+    </div>`;
+}
+function downloadRankingExcel() {
+  let works = DB.works.map(w => ({ ...w, scores: getWorkFinalScores(w.id) })).filter(w => w.scores !== null);
+  if (State.filters.modality !== 'all') works = works.filter(w => w.modality === State.filters.modality);
+  if (State.filters.presentationType !== 'all') works = works.filter(w => w.presentationType === State.filters.presentationType);
+  if (State.filters.status === 'eligible') works = works.filter(w => w.scores.eligibleForAward);
+  else if (State.filters.status === 'not-eligible') works = works.filter(w => !w.scores.eligibleForAward);
+  works.sort((a, b) => parseFloat(b.scores.finalScore) - parseFloat(a.scores.finalScore));
 
+  const headers = ['Pos','Código','Título','Autores','Institución','Modalidad','Tipo','Fase 2','Fase 3','Puntuación Final','Elegible Premio'];
+  const rows = works.map((w, i) => [
+    i + 1, w.code, w.title, w.authors || '', w.institution || '',
+    getModalityText(w.modality), getPresentationTypeText(w.presentationType),
+    w.scores.avgPhase2, w.scores.avgPhase3, w.scores.finalScore,
+    w.scores.eligibleForAward ? 'Sí' : 'No'
+  ]);
+
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
+    .join('\n');
+
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ASELME_Ranking_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
     function renderEvaluatorDashboard() {
       if (State.selectedWork) return renderWorkEvaluation();
       const assignedIds = DB.assignments.filter(a => a.evaluatorId === State.currentUser.id).map(a => a.workId);
