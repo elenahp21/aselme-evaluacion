@@ -78,6 +78,9 @@
     .score-lvl-active { box-shadow: 0 0 0 2px rgba(0,0,0,0.15); transform: scale(1.03); }
     .score-lvl-btn { transition: all 0.15s ease; }
     .score-lvl-btn:hover { opacity: 0.85; transform: scale(1.02); }
+    <div style="display:flex;justify-content:flex-end;margin-bottom:1rem;">
+  <button class="btn btn-success" onclick="downloadRankingExcel()">⬇ Descargar Excel</button>
+</div>
     .filter-bar { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
     .filter-bar select { flex: 1; min-width: 150px; }
     .work-detail { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
@@ -1613,6 +1616,43 @@ async function deleteWork(workId) {
         }
       }
     });
+    function downloadRankingExcel() {
+  let works = DB.works.map(w => ({ ...w, scores: getWorkFinalScores(w.id) })).filter(w => w.scores !== null);
+  if (State.filters.modality !== 'all') works = works.filter(w => w.modality === State.filters.modality);
+  if (State.filters.presentationType !== 'all') works = works.filter(w => w.presentationType === State.filters.presentationType);
+  if (State.filters.status === 'eligible') works = works.filter(w => w.scores.eligibleForAward);
+  else if (State.filters.status === 'not-eligible') works = works.filter(w => !w.scores.eligibleForAward);
+  works.sort((a, b) => parseFloat(b.scores.finalScore) - parseFloat(a.scores.finalScore));
+
+  const headers = ['Pos','Código','Título','Autores','Institución','Modalidad','Tipo','Fase 2','Fase 3','Puntuación Final','Elegible Premio'];
+  const rows = works.map((w, i) => [
+    i + 1,
+    w.code,
+    w.title,
+    w.authors || '',
+    w.institution || '',
+    getModalityText(w.modality),
+    getPresentationTypeText(w.presentationType),
+    w.scores.avgPhase2,
+    w.scores.avgPhase3,
+    w.scores.finalScore,
+    w.scores.eligibleForAward ? 'Sí' : 'No'
+  ]);
+
+  // Construir CSV con separador de punto y coma (compatible con Excel español)
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
+    .join('\n');
+
+  const BOM = '\uFEFF'; // BOM para que Excel reconozca UTF-8 (tildes, ñ)
+  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ASELME_Ranking_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
     Object.assign(window, {
       handleLogin, doLogin, logout, changePassword, doChangePassword, saveUser, doSaveUser, resetAdminFromLogin, saveWork, doSaveWork, saveAssignments, doSaveAssignments, doSavePhase1, doSavePhase2, doSavePhase3, selectScore, highlightScoreBtn,
