@@ -655,7 +655,10 @@ function downloadRankingExcel() {
             <div class="work-detail"><div class="work-detail-label">Modalidad</div><div>${getModalityText(work.modality)}</div></div>
             <div class="work-detail"><div class="work-detail-label">Tipo de presentación</div><div>${getPresentationTypeText(work.presentationType)}</div></div>
             <div class="work-detail"><div class="work-detail-label">Resumen</div><div>${work.abstract || ''}</div></div>
-            ${work.fileUrl ? `<div class="work-detail"><a href="${work.fileUrl}" download="${work.fileName}" class="btn btn-outline">Descargar texto completo</a></div>` : ''}
+           <div class="work-detail" style="display:flex;gap:1rem;flex-wrap:wrap;">
+  ${work.fileUrl ? `<a href="${work.fileUrl}" download="${work.fileName}" class="btn btn-outline">Descargar texto completo</a>` : ''}
+  <button class="btn btn-outline" onclick="downloadWorkPDF('${work.id}')">⬇ Descargar ficha PDF</button>
+</div>
           </div>
           ${!p1 ? renderPhase1Form(work) :
             !p1.passed ? renderPhase1Rejected(p1) :
@@ -1683,7 +1686,45 @@ async function deleteWork(workId) {
   a.click();
   URL.revokeObjectURL(url);
 }
+function downloadWorkPDF(workId) {
+  const work = DB.works.find(w => w.id === workId);
+  if (!work) return;
 
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+  <title>Ficha ${work.code}</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; color: #0f172a; line-height: 1.6; }
+    h1 { color: #0284c7; font-size: 1.4rem; margin-bottom: 0.25rem; }
+    .code { color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .label { font-weight: 700; color: #64748b; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 1.25rem; margin-bottom: 0.25rem; }
+    .value { font-size: 1rem; }
+    hr { border: none; border-top: 1px solid #e2e8f0; margin: 1.5rem 0; }
+    .footer { margin-top: 3rem; font-size: 0.75rem; color: #94a3b8; text-align: center; }
+  </style>
+  </head><body>
+    <div class="code">${work.code}</div>
+    <h1>${work.title}</h1>
+    <hr>
+    <div class="label">Autores</div>
+    <div class="value">${work.authors || '—'}</div>
+    <div class="label">Institución</div>
+    <div class="value">${work.institution || '—'}</div>
+    <div class="label">Modalidad</div>
+    <div class="value">${getModalityText(work.modality)}</div>
+    <div class="label">Tipo de presentación</div>
+    <div class="value">${getPresentationTypeText(work.presentationType)}</div>
+    <div class="label">Resumen</div>
+    <div class="value">${work.abstract || '—'}</div>
+    <div class="footer">ASELME - Sistema de Evaluación Científica · ${new Date().toLocaleDateString('es-ES')}</div>
+  </body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if (win) {
+    win.onload = () => { win.print(); URL.revokeObjectURL(url); };
+  }
+}
     Object.assign(window, {
       handleLogin, doLogin, logout, changePassword, doChangePassword, saveUser, doSaveUser, resetAdminFromLogin, saveWork, doSaveWork, saveAssignments, doSaveAssignments, doSavePhase1, doSavePhase2, doSavePhase3, selectScore, highlightScoreBtn,
       selectWork, backToWorksList,
@@ -1692,7 +1733,7 @@ async function deleteWork(workId) {
       showCreateUserForm, hideUserForm, showEditUserForm, saveUser, deleteUser, resetPassword, toggleActive, assignUserToAllWorks,
       showCreateWorkForm, hideWorkForm, showEditWorkForm, saveWork,
       showAssignForm, hideAssignForm, saveAssignments,
-      emergencyResetAdmin, downloadRankingExcel
+      emergencyResetAdmin, downloadRankingExcel, downloadWorkPDF
     });
   </script>
 </body>
