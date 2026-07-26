@@ -77,10 +77,7 @@
     .hidden { display: none !important; }
     .score-lvl-active { box-shadow: 0 0 0 2px rgba(0,0,0,0.15); transform: scale(1.03); }
     .score-lvl-btn { transition: all 0.15s ease; }
-    .score-lvl-btn:hover { opacity: 0.85; transform: scale(1.02); }
-    <div style="display:flex;justify-content:flex-end;margin-bottom:1rem;">
-  <button class="btn btn-success" onclick="downloadRankingExcel()">⬇ Descargar Excel</button>
-</div>
+   .score-lvl-btn:hover { opacity: 0.85; transform: scale(1.02); }
     .filter-bar { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
     .filter-bar select { flex: 1; min-width: 150px; }
     .work-detail { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
@@ -1380,17 +1377,25 @@ function downloadRankingExcel() {
       alert('Contraseña restablecida. El usuario deberá cambiarla al próximo acceso.'); render();
     }
 
-    function toggleActive(userId) {
+   async function toggleActive(userId) {
       const user = DB.users.find(u => u.id === userId);
       if (!user) return;
       if (user.role === 'admin' && user.active && DB.users.filter(u => u.role === 'admin' && u.active && u.id !== userId).length === 0) { alert('No se puede desactivar al único administrador activo.'); return; }
-      user.active = !user.active; saveDB(); render();
+      user.active = !user.active;
+      saveDB();
+      await sbUpsert('users', { id:user.id, username:user.username, password_hash:user.passwordHash, full_name:user.fullName, role:user.role, active:user.active, force_password_change:user.forcePasswordChange });
+      render();
     }
 
-    function assignUserToAllWorks(userId) {
+async function assignUserToAllWorks(userId) {
       if (!confirm('¿Asignar este evaluador a todos los trabajos?')) return;
-      DB.works.forEach(w => { if (!DB.assignments.some(a => a.workId === w.id && a.evaluatorId === userId)) DB.assignments.push({ id: 'assign-' + Date.now() + Math.random(), workId: w.id, evaluatorId: userId }); });
-      saveDB(); alert('Evaluador asignado a todos los trabajos.'); render();
+      const nuevas = DB.works.filter(w => !DB.assignments.some(a => a.workId === w.id && a.evaluatorId === userId))
+        .map(w => ({ id: 'assign-' + Date.now() + '-' + w.id, workId: w.id, evaluatorId: userId }));
+      nuevas.forEach(a => DB.assignments.push(a));
+      saveDB();
+      for (const a of nuevas) { await sbUpsert('assignments', { id:a.id, work_id:a.workId, evaluator_id:a.evaluatorId }); }
+      alert('Evaluador asignado a todos los trabajos.');
+      render();
     }
 
     // ============================================
