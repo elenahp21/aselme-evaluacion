@@ -1167,7 +1167,9 @@ function downloadRankingExcel() {
         if (!q1el || !q2el || !q3el) { alert('Por favor responde todas las preguntas.'); return; }
         const q1 = q1el.value === 'true', q2 = q2el.value === 'true', q3 = q3el.value === 'true';
         const passed = q1 && q2 && q3;
-        const p1 = { id: 'phase1-' + Date.now(), workId: State.selectedWork.id, evaluatorId: State.currentUser.id, q1TitleSpecific: q1, q2ApplicableField: q2, q3StructureNorms: q3, passed, comments: commentsEl ? commentsEl.value : '', createdAt: new Date() };
+       const existingP1 = DB.phase1Reviews.find(r => r.workId === State.selectedWork.id && r.evaluatorId === State.currentUser.id);
+        const p1 = { id: existingP1 ? existingP1.id : ('phase1-' + Date.now()), workId: State.selectedWork.id, evaluatorId: State.currentUser.id, q1TitleSpecific: q1, q2ApplicableField: q2, q3StructureNorms: q3, passed, comments: commentsEl ? commentsEl.value : '', createdAt: new Date() };
+        if (existingP1) { const i = DB.phase1Reviews.indexOf(existingP1); DB.phase1Reviews.splice(i, 1); }
         DB.phase1Reviews.push(p1);
         saveDB();
         await sbUpsert('phase1_reviews', { id:p1.id, work_id:p1.workId, evaluator_id:p1.evaluatorId, q1_title_specific:q1, q2_applicable_field:q2, q3_structure_norms:q3, passed, comments:p1.comments });
@@ -1190,8 +1192,10 @@ function downloadRankingExcel() {
         if (!form) { alert('Error: formulario no encontrado.'); return; }
         const work = State.selectedWork;
         const isInv = work.modality === 'investigacion';
+       const existingP2Idx = DB.phase2Reviews.findIndex(r => r.workId === work.id && r.evaluatorId === State.currentUser.id);
+        const existingP2Id = existingP2Idx !== -1 ? DB.phase2Reviews[existingP2Idx].id : null;
         const review = {
-          id: 'phase2-' + Date.now(), workId: work.id, evaluatorId: State.currentUser.id,
+          id: existingP2Id || ('phase2-' + Date.now()), workId: work.id, evaluatorId: State.currentUser.id,
           modality: work.modality,
           c1Innovation: parseFloat(getVal(form,'c1Innovation')),
           c2Objectives: parseFloat(getVal(form,'c2Objectives')),
@@ -1211,8 +1215,7 @@ function downloadRankingExcel() {
           review.c3Intervention = parseFloat(getVal(form,'c3Intervention'));
           review.c3Indicators = parseFloat(getVal(form,'c3Indicators'));
         }
-        const idx = DB.phase2Reviews.findIndex(r => r.workId === work.id && r.evaluatorId === State.currentUser.id);
-        if (idx !== -1) DB.phase2Reviews.splice(idx, 1);
+       if (existingP2Idx !== -1) DB.phase2Reviews.splice(existingP2Idx, 1);
         DB.phase2Reviews.push(review);
         saveDB();
         await sbUpsert('phase2_reviews', { id:review.id, work_id:review.workId, evaluator_id:review.evaluatorId, modality:review.modality, c1_innovation:review.c1Innovation, c2_objectives:review.c2Objectives, c3_design:review.c3Design||null, c3_sample:review.c3Sample||null, c3_measurement:review.c3Measurement||null, c3_analysis:review.c3Analysis||null, c3_description:review.c3Description||null, c3_selection:review.c3Selection||null, c3_intervention:review.c3Intervention||null, c3_indicators:review.c3Indicators||null, c4_results:review.c4Results, c5_utility:review.c5Utility, comments:review.comments, is_draft:isDraft });
@@ -1230,8 +1233,10 @@ function downloadRankingExcel() {
         const form = document.getElementById('phase3Form');
         if (!form) { alert('Error: formulario no encontrado.'); return; }
         const work = State.selectedWork;
+       const existingP3Idx = DB.phase3Reviews.findIndex(r => r.workId === work.id && r.evaluatorId === State.currentUser.id);
+        const existingP3Id = existingP3Idx !== -1 ? DB.phase3Reviews[existingP3Idx].id : null;
         const review = {
-          id: 'phase3-' + Date.now(), workId: work.id, evaluatorId: State.currentUser.id,
+          id: existingP3Id || ('phase3-' + Date.now()), workId: work.id, evaluatorId: State.currentUser.id,
           c1Clarity: parseFloat(getVal(form,'c1Clarity')),
           c2Mastery: parseFloat(getVal(form,'c2Mastery')),
           c3TimeManagement: parseFloat(getVal(form,'c3TimeManagement')),
@@ -1239,8 +1244,7 @@ function downloadRankingExcel() {
           comments: getVal(form,'comments'),
           isDraft, createdAt: new Date(), updatedAt: new Date()
         };
-        const idx = DB.phase3Reviews.findIndex(r => r.workId === work.id && r.evaluatorId === State.currentUser.id);
-        if (idx !== -1) DB.phase3Reviews.splice(idx, 1);
+        if (existingP3Idx !== -1) DB.phase3Reviews.splice(existingP3Idx, 1);
         DB.phase3Reviews.push(review);
         saveDB();
         await sbUpsert('phase3_reviews', { id:review.id, work_id:review.workId, evaluator_id:review.evaluatorId, c1_clarity:review.c1Clarity, c2_mastery:review.c2Mastery, c3_time_management:review.c3TimeManagement, c4_visual_quality:review.c4VisualQuality, comments:review.comments, is_draft:isDraft });
