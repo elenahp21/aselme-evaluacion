@@ -162,7 +162,7 @@
     const mapP1 = r => ({ id:r.id, workId:r.work_id, evaluatorId:r.evaluator_id, q1TitleSpecific:r.q1_title_specific, q2ApplicableField:r.q2_applicable_field, q3StructureNorms:r.q3_structure_norms, passed:r.passed, comments:r.comments||'', createdAt:r.created_at?new Date(r.created_at):new Date() });
     const mapP2 = r => ({ id:r.id, workId:r.work_id, evaluatorId:r.evaluator_id, modality:r.modality, c1Innovation:r.c1_innovation, c2Objectives:r.c2_objectives, c3Design:r.c3_design, c3Sample:r.c3_sample, c3Measurement:r.c3_measurement, c3Analysis:r.c3_analysis, c3Description:r.c3_description, c3Selection:r.c3_selection, c3Intervention:r.c3_intervention, c3Indicators:r.c3_indicators, c4Results:r.c4_results, c5Utility:r.c5_utility, comments:r.comments||'', isDraft:r.is_draft??true, createdAt:r.created_at?new Date(r.created_at):new Date(), updatedAt:r.updated_at?new Date(r.updated_at):new Date() });
     const mapP3 = r => ({ id:r.id, workId:r.work_id, evaluatorId:r.evaluator_id, c1Clarity:r.c1_clarity, c2Mastery:r.c2_mastery, c3TimeManagement:r.c3_time_management, c4VisualQuality:r.c4_visual_quality, comments:r.comments||'', isDraft:r.is_draft??true, createdAt:r.created_at?new Date(r.created_at):new Date(), updatedAt:r.updated_at?new Date(r.updated_at):new Date() });
-
+const mapLoginAttempt = a => ({ id:a.id, username:a.username, success:a.success, timestamp:a.timestamp?new Date(a.timestamp):new Date() });
     async function sbFetch(table, mapper) {
       if (!supabaseClient) return null;
       try {
@@ -211,13 +211,14 @@
       if (supabaseClient) {
         console.log('Cargando desde Supabase (fuente de verdad)...');
         try {
-          const [sbUsers, sbWorks, sbAssign, sbP1, sbP2, sbP3] = await Promise.all([
+       const [sbUsers, sbWorks, sbAssign, sbP1, sbP2, sbP3, sbLogins] = await Promise.all([
             sbFetch('users',           mapUser),
             sbFetch('works',           mapWork),
             sbFetch('assignments',     mapAssignment),
             sbFetch('phase1_reviews',  mapP1),
             sbFetch('phase2_reviews',  mapP2),
             sbFetch('phase3_reviews',  mapP3),
+            sbFetch('login_attempts',  mapLoginAttempt),
           ]);
 
           let db = {
@@ -227,8 +228,8 @@
             phase1Reviews: sbP1     || [],
             phase2Reviews: sbP2     || [],
             phase3Reviews: sbP3     || [],
-            settings:      local?.settings || { phase1Open:true, phase2Open:true, phase3Open:true },
-            loginAttempts: local?.loginAttempts || []
+          settings:      local?.settings || { phase1Open:true, phase2Open:true, phase3Open:true },
+            loginAttempts: sbLogins || local?.loginAttempts || []
           };
           console.log('Supabase cargado — users:', db.users.length, 'works:', db.works.length);
 
@@ -409,15 +410,17 @@
       return `
         ${renderHeader()}
         <div class="container" style="padding-top:2rem;padding-bottom:3rem;">
-          <div class="tabs">
+         <div class="tabs">
             <button class="tab" data-tab="estadisticas">Estadísticas</button>
             <button class="tab" data-tab="trabajos">Trabajos</button>
             <button class="tab" data-tab="usuarios">Usuarios</button>
+            <button class="tab" data-tab="pendientes">Pendientes</button>
             <button class="tab" data-tab="ranking">Ranking</button>
           </div>
           <div id="tab-estadisticas" class="tab-content hidden">${renderAdminStats()}</div>
           <div id="tab-trabajos" class="tab-content hidden">${renderWorksManagement()}</div>
           <div id="tab-usuarios" class="tab-content hidden">${renderUsersManagement()}</div>
+          <div id="tab-pendientes" class="tab-content hidden">${renderPendingByEvaluator()}</div>
           <div id="tab-ranking" class="tab-content hidden">${renderRanking()}</div>
         </div>`;
     }
@@ -540,6 +543,28 @@
             }).join('')}</tbody>
           </table>
         </div>
+      </div>`;
+    }
+
+    function renderPendingByEvaluator() {
+      const evaluators = DB.users.filter(u => u.role === 'evaluador' && u.active);
+      return `<div class="card">
+        <h3 style="margin-bottom:1rem;">Evaluaciones pendientes por evaluadora</h3>
+        ${evaluators.map(ev => {
+          const assigned = DB.assignments.filter(a => a.evaluatorId === ev.id).map(a => a.workId);
+          const pendingWorks = assigned.filter(workId => {
+            const p2 = DB.phase2Reviews.find(r => r.workId === workId && r.evaluatorId === ev.id && !r.isDraft);
+            return !p2;
+          }).map(workId => DB.works.find(w => w.id === workId)).filter(Boolean);
+          const doneCount = assigned.length - pendingWorks.length;
+          return `<div style="padding:1rem 0;border-bottom:1px solid var(--border);">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+              <div><strong>${ev.fullName}</strong> <span style="color:var(--text-secondary);font-size:0.875rem;">(${ev.username})</span></div>
+              <span class="badge ${pendingWorks.length === 0 ? 'badge-completed' : 'badge-pending'}">${doneCount} / ${assigned.length} completadas</span>
+            </div>
+            ${pendingWorks.length > 0 ? `<div style="margin-top:0.5rem;font-size:0.875rem;color:var(--text-secondary);">Pendiente: ${pendingWorks.map(w => w.code).join(', ')}</div>` : ''}
+          </div>`;
+        }).join('')}
       </div>`;
     }
 
@@ -1065,11 +1090,13 @@ function downloadRankingExcel() {
         }
 
         // LOGIN CORRECTO
-        State.currentUser = user;
+     State.currentUser = user;
         State.currentView = 'dashboard';
         if (!DB.loginAttempts) DB.loginAttempts = [];
-        DB.loginAttempts.push({ timestamp: new Date(), username, success: true });
+        const loginRecord = { id: 'login-' + Date.now() + '-' + Math.random().toString(36).slice(2,7), timestamp: new Date(), username, success: true };
+        DB.loginAttempts.push(loginRecord);
         saveDB();
+        await sbUpsert('login_attempts', { id: loginRecord.id, username: loginRecord.username, success: loginRecord.success, timestamp: loginRecord.timestamp });
         console.log('doLogin: success, rendering dashboard');
         render();
 
