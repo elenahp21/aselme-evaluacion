@@ -1522,12 +1522,13 @@ async function deleteWork(workId) {
         if (!title) { showErr('El título es obligatorio.'); if (btn) { btn.disabled = false; btn.textContent = workId ? 'Actualizar' : 'Guardar'; } return; }
 
         // Leer archivo si hay uno
-       let fileUrl = null;
+              let fileUrl = null;
         let fileName = null;
         if (fileInput && fileInput.files && fileInput.files.length > 0) {
           const file = fileInput.files[0];
           fileName = file.name;
           const filePath = `work-${Date.now()}/${file.name}`;
+          console.log('Subiendo archivo:', fileName, '- tamaño:', (file.size/1024/1024).toFixed(2), 'MB - tipo:', file.type);
           const { error: uploadError } = await supabaseClient.storage
             .from('work-files')
             .upload(filePath, file, { upsert: true });
@@ -1536,8 +1537,10 @@ async function deleteWork(workId) {
               .from('work-files')
               .getPublicUrl(filePath);
             fileUrl = urlData.publicUrl;
+            console.log('Archivo subido correctamente:', fileUrl);
           } else {
-            console.warn('Error subiendo archivo:', uploadError.message);
+            console.error('Error subiendo archivo:', uploadError.message);
+            showErr('⚠️ El archivo NO se ha guardado: ' + uploadError.message + '\n\nEl resto del trabajo sí se ha guardado, pero tendrás que volver a intentar adjuntar el archivo.');
           }
         }
 
