@@ -639,10 +639,10 @@ function downloadRankingExcel() {
             const p2 = assigned ? getWorkPhase2Review(work.id, State.currentUser.id) : null;
             let lbl = assigned ? 'Pendiente' : 'No asignado';
             let cls = assigned ? 'badge-pending' : 'badge-not-eligible';
-            if (assigned) {
-              if (p1 && !p1.passed) { lbl = 'Rechazado en Fase 1'; cls = 'badge-not-eligible'; }
-              else if (p2 && !p2.isDraft) { lbl = 'Completado'; cls = 'badge-completed'; }
+                     if (assigned) {
+              if (p2 && !p2.isDraft) { lbl = 'Completado'; cls = 'badge-completed'; }
               else if (p2 && p2.isDraft) { lbl = 'Borrador guardado'; cls = 'badge-in-progress'; }
+              else if (p1 && !p1.passed) { lbl = 'No cumple Fase 1 - evaluar igualmente'; cls = 'badge-pending'; }
               else if (p1) { lbl = 'Fase 1 completada'; cls = 'badge-in-progress'; }
             }
             return `<div class="card"><div class="card-header"><div>
@@ -681,14 +681,16 @@ function downloadRankingExcel() {
   ${work.fileUrl ? `<a href="${work.fileUrl}" download="${work.fileName}" class="btn btn-outline">Descargar texto completo</a>` : ''}
   <button class="btn btn-outline" onclick="downloadWorkPDF('${work.id}')">⬇ Descargar ficha PDF</button>
 </div>
-          </div>
+                    </div>
           ${!p1 ? renderPhase1Form(work) :
-            !p1.passed ? renderPhase1Rejected(p1) :
             (() => {
-              if (State.editPhase2) return renderPhase2Form(work, p2);
-              if (State.editPhase3) return renderPhase3Section(work, p2, p3);
-              if (p2 && !p2.isDraft) return renderPhase3Section(work, p2, p3);
-              return renderPhase2Form(work, p2);
+              const avisoFase1 = !p1.passed ? renderPhase1RejectedBanner(p1) : '';
+              let contenidoFases;
+              if (State.editPhase2) contenidoFases = renderPhase2Form(work, p2);
+              else if (State.editPhase3) contenidoFases = renderPhase3Section(work, p2, p3);
+              else if (p2 && !p2.isDraft) contenidoFases = renderPhase3Section(work, p2, p3);
+              else contenidoFases = renderPhase2Form(work, p2);
+              return avisoFase1 + contenidoFases;
             })()
           }
         </div>`;
@@ -712,10 +714,10 @@ function downloadRankingExcel() {
       </div>`;
     }
 
-    function renderPhase1Rejected(review) {
+        function renderPhase1RejectedBanner(review) {
       return `<div class="card" style="margin-top:1.5rem;">
         <h3 style="margin-bottom:1rem;">Fase 1: Filtro Inicial</h3>
-        <div class="alert alert-danger"><div><strong>Trabajo rechazado en Fase 1</strong><br>No cumple con los criterios iniciales de elegibilidad.</div></div>
+        <div class="alert alert-warning"><div><strong>No cumple los criterios iniciales de elegibilidad</strong><br>Se continúa igualmente con la evaluación científica.</div></div>
         <p><strong>Fecha de evaluación:</strong> ${formatDate(review.createdAt)}</p>
         ${review.comments ? `<p style="margin-top:0.5rem;"><strong>Comentarios:</strong> ${review.comments}</p>` : ''}
       </div>`;
