@@ -714,7 +714,7 @@ function downloadRankingExcel() {
       </div>`;
     }
 
-        function renderPhase1RejectedBanner(review) {
+       function renderPhase1RejectedBanner(review) {
       return `<div class="card" style="margin-top:1.5rem;">
         <h3 style="margin-bottom:1rem;">Fase 1: Filtro Inicial</h3>
         <div class="alert alert-warning"><div><strong>No cumple los criterios iniciales de elegibilidad</strong><br>Se continúa igualmente con la evaluación científica.</div></div>
@@ -1202,7 +1202,7 @@ function downloadRankingExcel() {
         DB.phase1Reviews.push(p1);
         saveDB();
         await sbUpsert('phase1_reviews', { id:p1.id, work_id:p1.workId, evaluator_id:p1.evaluatorId, q1_title_specific:q1, q2_applicable_field:q2, q3_structure_norms:q3, passed, comments:p1.comments });
-        alert(passed ? '✓ Fase 1 completada. Puedes proceder con la evaluación científica.' : '⚠️ El trabajo ha sido rechazado en Fase 1.');
+        alert(passed ? '✓ Fase 1 completada. Puedes proceder con la evaluación científica.' : '⚠️ No cumple los criterios iniciales de Fase 1. Puedes continuar igualmente con la evaluación científica.');
         render();
       } catch(e) { console.error('doSavePhase1 error:', e); alert('Error: ' + e.message); }
     }
