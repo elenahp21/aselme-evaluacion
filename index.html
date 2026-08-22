@@ -638,8 +638,15 @@ function downloadRankingExcel() {
       if (State.selectedWork) return renderWorkEvaluation();
       const assignedIds = DB.assignments.filter(a => a.evaluatorId === State.currentUser.id).map(a => a.workId);
       const sortedWorks = [...DB.works].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' }));
-      return `${renderHeader()}
+           return `${renderHeader()}
         <div class="container" style="padding-top:2rem;padding-bottom:3rem;">
+          <div class="card" style="margin-bottom:1.5rem;">
+            <h3 style="margin-bottom:1rem;">Guías y rúbricas de evaluación</h3>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+              <a href="GuiaRapidaEvaluacion.png" target="_blank" class="btn btn-outline">📄 Guía rápida</a>
+              <a href="GuiaRapidaMetodologiaC3.png" target="_blank" class="btn btn-outline">📄 Rúbrica de evaluación</a>
+            </div>
+          </div>
           <h2 style="margin-bottom:1.5rem;">Trabajos disponibles</h2>
           ${sortedWorks.map(work => {
             const assigned = assignedIds.includes(work.id);
