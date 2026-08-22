@@ -689,6 +689,8 @@ function downloadRankingExcel() {
           <div class="card">
             <div style="color:var(--text-secondary);font-size:0.875rem;margin-bottom:0.5rem;">${work.code}</div>
             <h2 style="margin-bottom:1rem;">${work.title}</h2>
+                       <div class="work-detail"><div class="work-detail-label">Autores</div><div>${work.authors || '—'}</div></div>
+            <div class="work-detail"><div class="work-detail-label">Institución</div><div>${work.institution || '—'}</div></div>
             <div class="work-detail"><div class="work-detail-label">Modalidad</div><div>${getModalityText(work.modality)}</div></div>
             <div class="work-detail"><div class="work-detail-label">Tipo de presentación</div><div>${getPresentationTypeText(work.presentationType)}</div></div>
             <div class="work-detail"><div class="work-detail-label">Resumen</div><div>${work.abstract || ''}</div></div>
