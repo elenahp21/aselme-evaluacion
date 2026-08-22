@@ -634,13 +634,14 @@ function downloadRankingExcel() {
   a.click();
   URL.revokeObjectURL(url);
 }
-    function renderEvaluatorDashboard() {
+        function renderEvaluatorDashboard() {
       if (State.selectedWork) return renderWorkEvaluation();
       const assignedIds = DB.assignments.filter(a => a.evaluatorId === State.currentUser.id).map(a => a.workId);
+      const sortedWorks = [...DB.works].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' }));
       return `${renderHeader()}
         <div class="container" style="padding-top:2rem;padding-bottom:3rem;">
           <h2 style="margin-bottom:1.5rem;">Trabajos disponibles</h2>
-          ${DB.works.map(work => {
+          ${sortedWorks.map(work => {
             const assigned = assignedIds.includes(work.id);
             const p1 = assigned ? getWorkPhase1Review(work.id, State.currentUser.id) : null;
             const p2 = assigned ? getWorkPhase2Review(work.id, State.currentUser.id) : null;
