@@ -456,10 +456,14 @@ const mapLoginAttempt = a => ({ id:a.id, username:a.username, success:a.success,
         </div>`;
     }
 
-    function renderWorksManagement() {
+      function renderWorksManagement() {
+      const sortedWorks = [...DB.works].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' }));
       return `<div class="card">
         <h3 style="margin-bottom:1rem;">Gestión de Trabajos</h3>
-        <button class="btn btn-primary" onclick="showCreateWorkForm()" style="margin-bottom:1.5rem;">+ Nuevo trabajo</button>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+          <button class="btn btn-primary" onclick="showCreateWorkForm()">+ Nuevo trabajo</button>
+          <button class="btn btn-success" onclick="downloadWorksListPDF()">⬇ Descargar PDF del listado</button>
+        </div>
         <div id="workFormContainer" class="hidden" style="background:var(--bg);padding:1.5rem;border-radius:8px;margin-bottom:1.5rem;">
           <h4 id="workFormTitle" style="margin-bottom:1rem;">Nuevo trabajo</h4>
           <div id="workFormError" style="display:none;background:#fee2e2;color:#991b1b;border-left:4px solid #ef4444;padding:0.75rem 1rem;border-radius:8px;margin-bottom:1rem;"></div>
@@ -486,10 +490,10 @@ const mapLoginAttempt = a => ({ id:a.id, username:a.username, success:a.success,
             <div style="display:flex;gap:1rem;"><button type="button" class="btn btn-secondary" onclick="hideAssignForm()" style="flex:1;">Cancelar</button><button type="button" class="btn btn-success" id="assignFormBtn" onclick="doSaveAssignments()" style="flex:1;">Guardar</button></div>
           </form>
         </div>
-        <div class="table-container" style="margin-top:1.5rem;">
+           <div class="table-container" style="margin-top:1.5rem;">
           <table>
             <thead><tr><th>Código</th><th>Título</th><th>Autores</th><th>Institución</th><th>Modalidad</th><th>Tipo</th><th>Estado</th><th>Evaluaciones</th><th>Acciones</th></tr></thead>
-            <tbody>${DB.works.map(work => {
+            <tbody>${sortedWorks.map(work => {
               const p2 = DB.phase2Reviews.filter(r => r.workId === work.id && !r.isDraft).length;
               const ac = DB.assignments.filter(a => a.workId === work.id).length;
               return `<tr>
@@ -1730,7 +1734,54 @@ async function deleteWork(workId) {
   a.click();
   URL.revokeObjectURL(url);
 }
-function downloadWorkPDF(workId) {
+function downloadWorksListPDF() {
+  const sortedWorks = [...DB.works].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' }));
+
+  const rows = sortedWorks.map(w => {
+    const assignedNames = DB.assignments.filter(a => a.workId === w.id)
+      .map(a => { const u = DB.users.find(u => u.id === a.evaluatorId); return u ? u.fullName : '—'; })
+      .join(', ') || '—';
+    const p2Count = DB.phase2Reviews.filter(r => r.workId === w.id && !r.isDraft).length;
+    const acCount = DB.assignments.filter(a => a.workId === w.id).length;
+    return `<tr>
+      <td>${w.code}</td>
+      <td>${w.title}</td>
+      <td>${w.authors || ''}</td>
+      <td>${w.institution || ''}</td>
+      <td>${getModalityText(w.modality)}</td>
+      <td>${getPresentationTypeText(w.presentationType)}</td>
+      <td>${assignedNames}</td>
+      <td>${p2Count} / ${acCount}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+  <title>Listado de Trabajos ASELME</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; color: #0f172a; }
+    h1 { color: #0284c7; font-size: 1.3rem; margin-bottom: 0.25rem; }
+    .fecha { color:#64748b; font-size:0.85rem; margin-bottom:1.5rem; }
+    table { width:100%; border-collapse: collapse; font-size:0.8rem; }
+    th { background:#f1f5f9; text-align:left; padding:6px 8px; border-bottom:2px solid #cbd5e1; }
+    td { padding:6px 8px; border-bottom:1px solid #e2e8f0; vertical-align:top; }
+    .footer { margin-top:2rem; font-size:0.7rem; color:#94a3b8; text-align:center; }
+  </style>
+  </head><body>
+    <h1>ASELME - Listado de Trabajos</h1>
+    <div class="fecha">Generado el ${new Date().toLocaleDateString('es-ES', { year:'numeric', month:'long', day:'numeric' })} a las ${new Date().toLocaleTimeString('es-ES')}</div>
+    <table>
+      <thead><tr><th>Código</th><th>Título</th><th>Autores</th><th>Institución</th><th>Modalidad</th><th>Tipo</th><th>Evaluadoras asignadas</th><th>Evaluaciones</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="footer">ASELME - Sistema de Evaluación Científica</div>
+  </body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if (win) { win.onload = () => { win.print(); URL.revokeObjectURL(url); }; }
+}
+    function downloadWorkPDF(workId) {
   const work = DB.works.find(w => w.id === workId);
   if (!work) return;
 
@@ -1777,7 +1828,7 @@ function downloadWorkPDF(workId) {
       showCreateUserForm, hideUserForm, showEditUserForm, saveUser, deleteUser, resetPassword, toggleActive, assignUserToAllWorks,
       showCreateWorkForm, hideWorkForm, showEditWorkForm, saveWork,
       showAssignForm, hideAssignForm, saveAssignments,
-      emergencyResetAdmin, downloadRankingExcel, downloadWorkPDF
+           emergencyResetAdmin, downloadRankingExcel, downloadWorkPDF, downloadWorksListPDF
     });
   </script>
 </body>
