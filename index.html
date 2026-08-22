@@ -709,7 +709,7 @@ function downloadRankingExcel() {
         <h3 style="margin-bottom:1rem;">Fase 1: Filtro Inicial</h3>
         <div class="alert alert-info"><div>Responde las 3 preguntas. Si marcas "NO" en cualquiera, se contactará con el/la autor/a para su modificación.</div></div>
         <form id="phase1Form">
-          ${[['q1','¿El título es específico y refleja el contenido del trabajo?'],['q2','¿El contenido es aplicable al campo de la lesión medular?'],['q3','¿La estructura respeta las normas de presentación?']].map(([name, lbl], i) => `
+          ${[['q1','¿El título es específico y refleja el contenido del trabajo?'],['q2','¿El contenido es aplicable a enfermería y a las áreas temáticas del congreso?'],['q3','¿La estructura respeta las normas de presentación?']].map(([name, lbl], i) => `
             <div class="form-group"><label class="form-label">${i+1}. ${lbl}</label>
               <div class="radio-group">
                 <label class="radio-label"><input type="radio" name="${name}" value="true" required><span>Sí</span></label>
