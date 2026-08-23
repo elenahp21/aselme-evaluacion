@@ -377,13 +377,13 @@ const mapLoginAttempt = a => ({ id:a.id, username:a.username, success:a.success,
             <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" autocomplete="current-password">
           </div>
           <button id="loginBtn" class="btn btn-primary" style="width:100%;" onclick="doLogin()">Iniciar sesión</button>
-          <div style="text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--text-secondary);">
-            Usuarios en la base: ${DB && DB.users ? DB.users.length : 0}
-          </div>
-          <div style="text-align:center;margin-top:0.75rem;">
+                   <div style="text-align:center;margin-top:0.75rem;">
             <button type="button" onclick="resetAdminFromLogin()" style="background:none;border:none;color:var(--text-secondary);font-size:0.75rem;cursor:pointer;text-decoration:underline;">
               ¿Problemas para entrar? Restablecer admin
             </button>
+            <p style="font-size:0.7rem;color:var(--text-secondary);margin-top:0.4rem;">
+              (Este botón es solo para el administrador. Evaluadoras: si no podéis entrar, contactad con la administradora para que os restablezca la contraseña.)
+            </p>
           </div>
         </div>
       </div>`;
@@ -647,7 +647,10 @@ function downloadRankingExcel() {
               <a href="GuiaRapidaMetodologiaC3.png" target="_blank" class="btn btn-outline">📄 Guía Rápida C3</a>
             </div>
           </div>
-          <h2 style="margin-bottom:1.5rem;">Trabajos disponibles</h2>
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
+            <h2 style="margin-bottom:0;">Trabajos disponibles</h2>
+            <button class="btn btn-success btn-small" onclick="downloadMyEvaluationsPDF()">⬇ Descargar resumen de mis evaluaciones</button>
+          </div>
           ${sortedWorks.map(work => {
             const assigned = assignedIds.includes(work.id);
             const p1 = assigned ? getWorkPhase1Review(work.id, State.currentUser.id) : null;
@@ -1791,6 +1794,60 @@ function downloadWorksListPDF() {
   const win = window.open(url, '_blank');
   if (win) { win.onload = () => { win.print(); URL.revokeObjectURL(url); }; }
 }
+   function downloadMyEvaluationsPDF() {
+  const evaluatorId = State.currentUser.id;
+  const assignedIds = DB.assignments.filter(a => a.evaluatorId === evaluatorId).map(a => a.workId);
+  const sortedWorks = DB.works.filter(w => assignedIds.includes(w.id))
+    .sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' }));
+
+  const rows = sortedWorks.map(w => {
+    const p1 = getWorkPhase1Review(w.id, evaluatorId);
+    const p2 = getWorkPhase2Review(w.id, evaluatorId);
+    const p3 = getWorkPhase3Review(w.id, evaluatorId);
+
+    const f1 = p1 ? (p1.passed ? 'Completada (cumple)' : 'Completada (no cumple)') : 'Pendiente';
+    let f2 = 'Pendiente';
+    if (p2 && !p2.isDraft) { const { total } = calculatePhase2Score(p2); f2 = `Completada (${total.toFixed(2)} / 70)`; }
+    else if (p2 && p2.isDraft) { f2 = 'Borrador'; }
+    let f3 = 'Pendiente';
+    if (p3 && !p3.isDraft) { f3 = `Completada (${calculatePhase3Score(p3)} / 30)`; }
+    else if (p3 && p3.isDraft) { f3 = 'Borrador'; }
+
+    return `<tr>
+      <td>${w.code}</td>
+      <td>${w.title}</td>
+      <td>${f1}</td>
+      <td>${f2}</td>
+      <td>${f3}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+  <title>Mis evaluaciones - ASELME</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; color: #0f172a; }
+    h1 { color: #0284c7; font-size: 1.3rem; margin-bottom: 0.25rem; }
+    .sub { color:#64748b; font-size:0.85rem; margin-bottom:1.5rem; }
+    table { width:100%; border-collapse: collapse; font-size:0.8rem; }
+    th { background:#f1f5f9; text-align:left; padding:6px 8px; border-bottom:2px solid #cbd5e1; }
+    td { padding:6px 8px; border-bottom:1px solid #e2e8f0; vertical-align:top; }
+    .footer { margin-top:2rem; font-size:0.7rem; color:#94a3b8; text-align:center; }
+  </style>
+  </head><body>
+    <h1>ASELME - Resumen de mis evaluaciones</h1>
+    <div class="sub">${State.currentUser.fullName} (${State.currentUser.username}) · Generado el ${new Date().toLocaleDateString('es-ES', { year:'numeric', month:'long', day:'numeric' })} a las ${new Date().toLocaleTimeString('es-ES')}</div>
+    <table>
+      <thead><tr><th>Código</th><th>Título</th><th>Fase 1</th><th>Fase 2</th><th>Fase 3</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="footer">ASELME - Sistema de Evaluación Científica</div>
+  </body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if (win) { win.onload = () => { win.print(); URL.revokeObjectURL(url); }; }
+}
     function downloadWorkPDF(workId) {
   const work = DB.works.find(w => w.id === workId);
   if (!work) return;
@@ -1838,7 +1895,7 @@ function downloadWorksListPDF() {
       showCreateUserForm, hideUserForm, showEditUserForm, saveUser, deleteUser, resetPassword, toggleActive, assignUserToAllWorks,
       showCreateWorkForm, hideWorkForm, showEditWorkForm, saveWork,
       showAssignForm, hideAssignForm, saveAssignments,
-           emergencyResetAdmin, downloadRankingExcel, downloadWorkPDF, downloadWorksListPDF
+                emergencyResetAdmin, downloadRankingExcel, downloadWorkPDF, downloadWorksListPDF, downloadMyEvaluationsPDF
     });
   </script>
 </body>
